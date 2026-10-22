@@ -22,7 +22,9 @@ function out_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
 function doGet(e) {
-  if (!authOk_(e.parameter.key)) return out_({ ok: false, error: 'auth' });
+  e = e || {};
+  const key = e.parameter && e.parameter.key;   // undefined when run from the editor
+  if (!authOk_(key)) return out_({ ok: false, error: 'auth' });
   const v = sheet_().getDataRange().getValues();
   const recs = v.slice(1).filter(r => r[0] !== '').map(r => {
     const o = {};
@@ -36,6 +38,7 @@ function doGet(e) {
   return out_({ ok: true, records: recs });
 }
 function doPost(e) {
+  if (!e || !e.postData) return out_({ ok: false, error: 'no body' });
   const b = JSON.parse(e.postData.contents);
   if (!authOk_(b.key)) return out_({ ok: false, error: 'auth' });
   if (b.action !== 'replace' || !Array.isArray(b.records)) return out_({ ok: false, error: 'bad request' });
