@@ -5,133 +5,152 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Disciplinary Record</title>
 <meta name="description" content="EcoOils Mentari site safety warning register with SP1 / SP2 / SP3 tracking under Indonesian labour regulation.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f4f5f7;--card:#fff;--ink:#1c2430;--mut:#5d6877;--line:#dfe3e8;--brand:#14532d;--brand2:#166534;--acc:#0f766e;
-  --sp1:#d99a00;--sp2:#e8590c;--sp3:#c92a2a;--zt:#3b1d6e;--ok:#2b8a3e;--warn:#e67700;
-  --sp1b:#fff4d6;--sp2b:#ffe8d9;--sp3b:#ffe0e0;--ztb:#ebe3f8;--chip:#eef1f4;--shadow:0 1px 3px rgba(0,0,0,.08)
-}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
-  --bg:#12161b;--card:#1b2128;--ink:#e8ecf1;--mut:#9aa6b4;--line:#2d3641;--brand:#4ade80;--brand2:#22c55e;--acc:#2dd4bf;
-  --sp1:#f5c542;--sp2:#ff8a4c;--sp3:#ff6b6b;--zt:#b497f0;--ok:#69db7c;--warn:#ffa94d;
-  --sp1b:#3a3010;--sp2b:#3d2214;--sp3b:#3d1a1a;--ztb:#2a2040;--chip:#252d36;--shadow:none}}
+  --green:#44a276;--yellow:#ffc600;--black:#231f20;--grey:#aaaaaa;--grey2:#6e6b6c;--line:#dcdcdc;
+  --bg:#fff;--card:#fff;--ink:#231f20;--mut:#6e6b6c;--brand:#231f20;--brand2:#44a276;--acc:#44a276;
+  --sp1:#aaaaaa;--sp2:#ffc600;--sp3:#231f20;--zt:#6e6b6c;--ok:#44a276;--warn:#231f20;
+  --sp1b:#eeeeee;--sp2b:#fff3bf;--sp3b:#231f20;--ztb:#e4e4e4;--chip:#f4f4f4;--dots:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cg fill='%23aaaaaa'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Ccircle cx='36' cy='12' r='6'/%3E%3Ccircle cx='60' cy='12' r='6'/%3E%3Ccircle cx='84' cy='12' r='6'/%3E%3Ccircle cx='108' cy='12' r='6'/%3E%3Ccircle cx='12' cy='36' r='6'/%3E%3Ccircle cx='36' cy='36' r='6'/%3E%3Ccircle cx='60' cy='36' r='6'/%3E%3Ccircle cx='84' cy='36' r='6'/%3E%3Ccircle cx='108' cy='36' r='6'/%3E%3Ccircle cx='12' cy='60' r='6'/%3E%3Ccircle cx='36' cy='60' r='6'/%3E%3Ccircle cx='60' cy='60' r='6'/%3E%3Ccircle cx='84' cy='60' r='6'/%3E%3Ccircle cx='108' cy='60' r='6'/%3E%3Ccircle cx='12' cy='84' r='6'/%3E%3Ccircle cx='36' cy='84' r='6'/%3E%3Ccircle cx='60' cy='84' r='6'/%3E%3Ccircle cx='84' cy='84' r='6'/%3E%3Ccircle cx='108' cy='84' r='6'/%3E%3Ccircle cx='12' cy='108' r='6'/%3E%3Ccircle cx='36' cy='108' r='6'/%3E%3Ccircle cx='60' cy='108' r='6'/%3E%3Ccircle cx='84' cy='108' r='6'/%3E%3Ccircle cx='108' cy='108' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  --font:Jost,system-ui,Arial,sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-.brand h1{margin:0;font-size:1.25rem;letter-spacing:-.01em}
-.brand p{margin:2px 0 0;color:var(--mut);font-size:.82rem}
-.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.ver{font-size:.75rem;color:var(--mut);font-variant-numeric:tabular-nums}
-.lang{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.lang button{border:0;background:transparent;color:var(--ink);padding:5px 11px;font-weight:600;cursor:pointer;font-size:.8rem}
-.lang button.on{background:var(--brand2);color:#fff}
-nav{display:flex;gap:2px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:0 8px;position:sticky;top:0;z-index:5}
-nav button{border:0;background:none;color:var(--mut);padding:11px 13px;cursor:pointer;font-weight:600;font-size:.88rem;white-space:nowrap;border-bottom:3px solid transparent}
-nav button.on{color:var(--brand);border-color:var(--brand2)}
-main{max-width:1200px;margin:0 auto;padding:16px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--font);overflow-x:hidden}
+button,input,select,textarea{font-family:var(--font)}
+.dots-wm{position:fixed;right:-45px;bottom:-45px;width:150px;height:150px;opacity:.3;z-index:0;pointer-events:none;background:var(--dots) center/contain no-repeat}
+header,nav,main,.ptitle{position:relative;z-index:1;max-width:780px;margin:0 auto}
+header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:14px 16px 0}
+.brand{color:var(--grey2);font-size:13px;letter-spacing:.04em;line-height:1.35;padding-top:2px}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.ver{font-size:13px;color:var(--grey2);font-variant-numeric:tabular-nums}
+.lang{display:inline-flex;gap:2px}
+.lang button{border:0;border-bottom:3px solid transparent;background:transparent;color:var(--ink);padding:6px 9px;font-weight:500;cursor:pointer;font-size:15px;min-height:36px}
+.lang button.on{border-color:var(--green)}
+.ptitle{padding:26px 16px 14px;border-bottom:1px solid var(--black);margin-bottom:18px}
+.ptitle:after{content:"";position:absolute;left:16px;bottom:-4px;width:44px;height:7px;background:var(--green)}
+.ptitle h1{margin:0;font-weight:300;font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:#6e6b6c}
+nav{display:flex;flex-wrap:wrap;gap:0 4px;padding:0 10px;margin-bottom:6px}
+nav button{border:0;background:none;color:var(--ink);padding:10px 8px;cursor:pointer;font-weight:400;font-size:15px;border-bottom:3px solid transparent;min-height:44px}
+nav button.on{border-color:var(--green);font-weight:500}
+main{padding:10px 16px 150px}
 section.tab{display:none}section.tab.on{display:block}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
-.card h2{margin:0 0 10px;font-size:1rem}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 10px;font-size:16px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--grey2)}
 .grid{display:grid;gap:12px}
-.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;border-left:5px solid var(--line)}
-.kpi b{display:block;font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
-.kpi span{color:var(--mut);font-size:.8rem}
-.k1{border-left-color:var(--sp1)}.k2{border-left-color:var(--sp2)}.k3{border-left-color:var(--sp3)}.kz{border-left-color:var(--zt)}.kb{border-left-color:var(--brand2)}
-.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.74rem;font-weight:700;white-space:nowrap}
-.b1{background:var(--sp1b);color:var(--sp1)}.b2{background:var(--sp2b);color:var(--sp2)}.b3{background:var(--sp3b);color:var(--sp3)}.bZT{background:var(--ztb);color:var(--zt)}
-.st{font-size:.76rem;padding:2px 8px;border-radius:6px;background:var(--chip);color:var(--mut);display:inline-block}
-.st.ok{color:var(--ok)}.st.skipped,.st.phk{color:var(--sp3);background:var(--sp3b)}.st.repeat{color:var(--warn);background:var(--sp2b)}.st.zt{color:var(--zt);background:var(--ztb)}
-.bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.84rem}
-.bar .lbl{width:120px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar .trk{flex:1;display:flex;height:16px;background:var(--chip);border-radius:4px;overflow:hidden}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;border-left:5px solid var(--line)}
+.kpi b{display:block;font-size:30px;font-weight:300;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--mut);font-size:14px}
+.k1{border-left-color:var(--grey)}.k2{border-left-color:var(--yellow)}.k3{border-left-color:var(--black)}.kz{border-left-color:var(--grey2)}.kb{border-left-color:var(--green)}
+.two{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:600;white-space:nowrap;background:var(--chip);color:var(--black)}
+.badge:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.b1:before{background:var(--grey)}.b2{background:var(--sp2b)}.b2:before{background:var(--yellow)}
+.b3{background:var(--black);color:#fff}.b3:before{background:#fff}
+.bZT{background:#fff;border:1px dashed var(--black)}.bZT:before{background:var(--grey2)}
+.st{font-size:13px;padding:2px 8px;border-radius:6px;background:var(--chip);color:var(--mut);display:inline-block;line-height:1.35}
+.st.ok{color:var(--black);background:#e6f3ec}
+.st.skipped,.st.phk{color:var(--black);background:var(--yellow);font-weight:500}
+.st.repeat{color:var(--black);background:var(--sp2b)}
+.st.zt{color:var(--black);background:var(--ztb)}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}
+.bar .lbl{width:110px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .trk{flex:1;display:flex;height:14px;background:var(--chip);border-radius:3px;overflow:hidden}
 .bar .trk i{display:block;height:100%}
 .bar .n{width:34px;text-align:right;font-variant-numeric:tabular-nums;color:var(--mut)}
-.s1{background:var(--sp1)}.s2{background:var(--sp2)}.s3{background:var(--sp3)}.sZT{background:var(--zt)}
-.months{display:flex;align-items:flex-end;gap:6px;height:150px;padding-top:6px}
-.months div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;font-size:.65rem;text-align:center;color:var(--mut)}
-.months .st-col{display:flex;flex-direction:column-reverse;border-radius:3px;overflow:hidden}
-.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.76rem;color:var(--mut);margin-top:8px}
+.s1{background:var(--grey)}.s2{background:var(--yellow)}.s3{background:var(--black)}.sZT{background:var(--grey2)}
+.months{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:6px}
+.months div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;height:100%;font-size:11px;text-align:center;color:var(--mut);min-width:0}
+.months .st-col{display:flex;flex-direction:column-reverse;border-radius:2px;overflow:hidden}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--mut);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
-.tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.84rem}
-th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);position:sticky;top:0;background:var(--card)}
-td.v{max-width:300px;white-space:pre-wrap}
+.tw{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--grey2);background:#fff;white-space:nowrap}
+td.v{min-width:200px;max-width:300px;white-space:pre-wrap}
 .bar-f{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-input,select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input,select,textarea{font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-height:44px}
 .bar-f input,.bar-f select{width:auto;flex:1;min-width:130px}
-textarea{min-height:90px;resize:vertical}
-label{display:block;font-size:.8rem;font-weight:600;color:var(--mut);margin-bottom:3px}
-label i{color:var(--sp3);font-style:normal}
-.f2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+textarea{min-height:96px;resize:vertical}
+label{display:block;font-size:14px;font-weight:500;color:var(--grey2);margin-bottom:4px}
+label i{color:var(--black);font-style:normal}
+.f2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
 .full{grid-column:1/-1}
-button.btn{background:var(--brand2);color:#fff;border:0;border-radius:8px;padding:9px 15px;font-weight:600;cursor:pointer;font-size:.86rem}
-button.btn.sec{background:var(--chip);color:var(--ink)}
-button.btn.dng{background:var(--sp3);color:#fff}
-button.btn.sm{padding:4px 9px;font-size:.76rem}
+button.btn{background:var(--green);color:var(--black);border:1px solid var(--green);border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;font-size:15px;min-height:44px;transition:opacity .15s}
+button.btn:hover{opacity:.88}
+button.btn.sec,button.btn.dng{background:#fff;color:var(--black);border:1px solid var(--grey);font-weight:500}
+button.btn.y{background:var(--yellow);border-color:var(--yellow)}
+button.btn.sm{padding:4px 10px;font-size:13px;min-height:34px}
+button:disabled{opacity:.4;cursor:default}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.reco{border-radius:10px;padding:10px 12px;margin:12px 0;border:1px solid var(--line);background:var(--chip);font-size:.88rem}
-.reco.r1{background:var(--sp1b)}.reco.r2{background:var(--sp2b)}.reco.r3{background:var(--sp3b)}.reco.rp{background:var(--sp3b);border-color:var(--sp3)}
-.muted{color:var(--mut);font-size:.82rem}
-.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:.84rem}
-.wk{display:grid;grid-template-columns:300px 1fr;gap:14px}
-@media(max-width:760px){.wk{grid-template-columns:1fr}}
-.wlist{max-height:70vh;overflow:auto}
-.wi{padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.reco{border-radius:8px;padding:10px 12px;margin:12px 0;border:1px solid var(--line);border-left:5px solid var(--grey);background:#fafafa;font-size:15px}
+.reco.r1{border-left-color:var(--grey)}.reco.r2{border-left-color:var(--yellow);background:#fffbe6}.reco.r3,.reco.rp{border-left-color:var(--black);background:#fff3bf}
+.muted{color:var(--mut);font-size:14px}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:14px}
+.wk{display:grid;grid-template-columns:260px 1fr;gap:14px}
+@media(max-width:900px){.wk{grid-template-columns:1fr}}
+.wlist{max-height:60vh;overflow:auto}
+.wi{padding:9px 10px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;min-height:44px}
 .wi:hover,.wi.on{background:var(--chip)}
-.tl{border-left:3px solid var(--line);margin-left:6px;padding-left:14px}
+.tl{border-left:2px solid var(--line);margin-left:6px;padding-left:14px}
 .tl>div{position:relative;margin-bottom:14px}
-.tl>div:before{content:"";position:absolute;left:-21px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--brand2);border:2px solid var(--card)}
-.legal h3{margin:16px 0 6px;font-size:.95rem}
-.legal .cite{border-left:4px solid var(--brand2);padding:6px 12px;margin:8px 0;background:var(--chip);border-radius:0 8px 8px 0}
-.legal .cite b{display:block}
+.tl>div:before{content:"";position:absolute;left:-21px;top:7px;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid #fff}
+.legal h3{margin:18px 0 6px;font-size:16px;font-weight:600}
+.legal .cite{border-left:4px solid var(--green);padding:6px 12px;margin:8px 0;background:var(--chip);border-radius:0 8px 8px 0;font-size:15px}
+.legal .cite b{display:block;font-weight:500}
 .legal ul{margin:6px 0;padding-left:20px}
-.note{border:1px dashed var(--warn);border-radius:10px;padding:10px 12px;background:var(--sp1b);font-size:.86rem;margin:10px 0}
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1c2430;color:#fff;padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:50;display:none;max-width:90vw}
-/* letter modal */
-#lm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;overflow:auto;padding:14px}
+.legal a{color:var(--black)}
+.note{border-left:5px solid var(--yellow);padding:10px 12px;background:#fffbe6;font-size:15px;margin:10px 0;border-radius:0 8px 8px 0}
+.empty{text-align:center;padding:34px 12px;color:var(--grey);text-transform:uppercase;letter-spacing:.12em;font-weight:300;font-size:14px}
+.empty i{display:block;width:56px;height:56px;margin:0 auto 12px;background:var(--dots) center/contain no-repeat}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--black);color:#fff;padding:10px 16px;border-radius:8px;font-size:15px;z-index:50;display:none;max-width:90vw}
+#lm{display:none;position:fixed;inset:0;background:rgba(35,31,32,.7);z-index:40;overflow:auto;padding:14px}
 #lm.on{display:block}
-.lm-bar{max-width:210mm;margin:0 auto 10px;background:var(--card);padding:10px 12px;border-radius:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lm-bar{max-width:210mm;margin:0 auto 10px;background:#fff;padding:10px 12px;border-radius:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .lm-bar select{width:auto}
-.sheet{width:210mm;max-width:100%;margin:0 auto;background:#fff;color:#000;padding:16mm 16mm 12mm;font:11pt/1.4 "Times New Roman",Georgia,serif;box-shadow:0 2px 14px rgba(0,0,0,.4)}
-.sheet .lh{text-align:center;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:10px}
-.sheet .lh b{font-size:14pt;letter-spacing:.04em}
+.sheet{width:210mm;max-width:100%;margin:0 auto;background:#fff;color:#000;padding:16mm 16mm 12mm;font:400 10.5pt/1.32 var(--font)}
+.sheet .lh{text-align:center;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:10px;position:relative}
+.sheet .lh b{font-size:14pt;font-weight:500;letter-spacing:.14em}
 .sheet .lh div{font-size:9.5pt}
-.sheet h2{text-align:center;font-size:12.5pt;margin:6px 0 2px;text-decoration:underline}
+.sheet h2{text-align:center;font-size:12.5pt;font-weight:500;letter-spacing:.06em;margin:6px 0 2px;color:#000;text-transform:none}
 .sheet .no{text-align:center;font-size:10pt;margin-bottom:10px}
 .sheet table{font-size:10.5pt;margin:6px 0}
-.sheet td,.sheet th{border:0;padding:2px 6px 2px 0;color:#000;background:none;text-transform:none;letter-spacing:0;font-size:10.5pt}
+.sheet td,.sheet th{border:0;padding:2px 6px 2px 0;color:#000;background:none;text-transform:none;letter-spacing:0;font-size:10.5pt;font-weight:400}
 .sheet td:first-child{width:36%}
-.sheet p{margin:6px 0;text-align:justify}
+.sheet p{margin:4px 0;text-align:justify}
 .sheet p.en{font-style:italic;font-size:10pt;color:#222;margin-top:0}
 .sheet .box{border:1.5px solid #000;padding:6px 10px;margin:8px 0;white-space:pre-wrap}
 .sheet .sig{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;font-size:9.5pt;text-align:center}
-.sheet .sig div{min-height:78px;border-top:0}
-.sheet .sig span{display:block;border-top:1px solid #000;margin-top:48px;padding-top:2px}
+.sheet .sig div{min-height:70px}
+.sheet .sig span{display:block;border-top:1px solid #000;margin-top:40px;padding-top:2px}
 .sheet .foot{font-size:8.5pt;border-top:1px solid #000;margin-top:12px;padding-top:4px;color:#222}
+@media(max-width:600px){
+  .ptitle{padding:22px 16px 12px}.ptitle h1{font-size:18px;letter-spacing:.1em}
+  nav button,.lang button{font-size:14px}.bar .lbl{width:84px}
+  .sheet{padding:10mm 6mm}.sheet .sig{grid-template-columns:repeat(2,1fr)}}
 @media print{
   body>*:not(#lm){display:none!important}
   #lm{position:static;background:none;padding:0;display:block!important}
   .lm-bar{display:none!important}
+  .dots-wm{display:none!important}
   .sheet{box-shadow:none;width:auto;padding:0;margin:0}
-  @page{size:A4;margin:14mm}
+  @page{size:A4;margin:12mm}
 }
 </style>
 </head>
 <body>
+<div class="dots-wm"></div>
 <header>
-  <div class="brand">
-    <h1 data-i="title">Disciplinary Record</h1>
-    <p data-i="sub">Site Safety Warnings · SP1 / SP2 / SP3</p>
-    <p>PT EcoOils Jaya Indonesia · Mentari Project · Sei Mangkei SEZ</p>
-  </div>
+  <div class="brand">PT EcoOils Jaya Indonesia<br>Mentari Project · Sei Mangkei SEZ</div>
   <div class="hdr-right">
-    <div class="ver" id="ver">v1.0.0</div>
-    <div class="lang"><button data-lang="en">EN</button><button data-lang="id">ID</button></div>
+    <div class="ver" id="ver">v1.1.0</div>
+    <div class="lang"><button data-lang="en">EN</button><button data-lang="id">ID</button><button data-lang="ms">MS</button></div>
   </div>
 </header>
+<div class="ptitle"><h1 id="pt">Disciplinary Record</h1></div>
 <nav id="nav">
   <button data-tab="dash" data-i="t_dash">Dashboard</button>
   <button data-tab="reg" data-i="t_reg">Register</button>
@@ -155,10 +174,11 @@ button.btn.sm{padding:4px 9px;font-size:.76rem}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="1.0.0";
+const VERSION="1.1.0";
+const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
 const COMPANIES=["PBS","KKS","WEN","GSB","PTTS","MPE","SOS","Other"];
-const MONTHS={en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],id:["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]};
+const MONTHS={ms:["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"],en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],id:["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]};
 const ROMAN=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
 
 /* ---------- i18n ---------- */
@@ -179,7 +199,7 @@ w_search:"Search worker…",w_pick:"Select a worker on the left.",w_cur:"Current
 legal_h:"Legal reference — SP1 / SP2 / SP3 in Indonesia",
 s_h1:"Rules",s_months:"SP validity (months)",s_months_h:"Default is 6 months (maximum under PP 35/2021 Pasal 52(1)) unless the contractor's PK / PP / PKB sets a different period.",s_issuer:"Default 'given by'",s_emp:"Letter header — company",s_h2:"Data",s_imp:"Import Excel / JSON",s_exp:"Export Excel",s_bak:"Backup (JSON)",s_clr:"Clear all data",s_imp_h:"Import reads the Microsoft Forms export (same columns as the Site Safety Warning Record). Duplicates are skipped. Data stays in this browser.",
 s_h3:"Google Sheets sync (optional, free)",s_url:"Apps Script web-app URL",s_key:"Shared key",s_push:"Push all to Sheet",s_pull:"Pull from Sheet",s_sync_h:"See README for the 5-minute Apps Script setup. Push replaces the Sheet with this browser's data; Pull replaces this browser's data with the Sheet.",
-imp_done:"Imported {n} new records, skipped {d} duplicates.",imp_err:"Could not read the file.",no_lib:"Excel library not loaded (needs internet once).",cleared:"All data cleared",confirmclr:"Delete ALL records from this browser? Export a backup first.",synced:"Sync done",sync_err:"Sync failed — check URL / key",
+imp_done:"Imported {n} new records, skipped {d} duplicates.",imp_err:"Could not read the file.",no_lib:"Excel library not loaded (needs internet once).",cleared:"All data cleared",confirmclr:"Delete ALL records from this browser? Export a backup first.",confirmpush:"This browser has no records. Pushing will ERASE the Sheet. Continue?",synced:"Sync done",sync_err:"Sync failed — check URL / key",
 lt_lang:"Letter language",lt_id:"Bahasa Indonesia",lt_en:"English",lt_both:"Bilingual",print:"Print / Save PDF",close:"Close",
 cat_glasses:"Safety glasses / eye protection",cat_smoking:"Smoking",cat_permit:"Permit / PTW",cat_height:"Work at height / harness",cat_ppe:"Other PPE",cat_vehicle:"Vehicle / lifting / traffic",cat_other:"Other"},
 id:{title:"Catatan Disiplin",sub:"Peringatan Keselamatan Kerja · SP1 / SP2 / SP3",t_dash:"Dasbor",t_reg:"Register",t_new:"Peringatan Baru",t_wk:"Riwayat Pekerja",t_legal:"Rujukan Hukum",t_set:"Pengaturan",
@@ -198,19 +218,39 @@ w_search:"Cari pekerja…",w_pick:"Pilih pekerja di sebelah kiri.",w_cur:"Status
 legal_h:"Rujukan hukum — SP1 / SP2 / SP3 di Indonesia",
 s_h1:"Aturan",s_months:"Masa berlaku SP (bulan)",s_months_h:"Bawaan 6 bulan (batas maksimum Pasal 52 ayat (1) PP 35/2021) kecuali PK / PP / PKB kontraktor menetapkan lain.",s_issuer:"'Diberikan oleh' bawaan",s_emp:"Kop surat — perusahaan",s_h2:"Data",s_imp:"Impor Excel / JSON",s_exp:"Ekspor Excel",s_bak:"Cadangan (JSON)",s_clr:"Hapus semua data",s_imp_h:"Impor membaca ekspor Microsoft Forms (kolom sama dengan Site Safety Warning Record). Duplikat dilewati. Data tetap di browser ini.",
 s_h3:"Sinkron Google Sheets (opsional, gratis)",s_url:"URL web-app Apps Script",s_key:"Kunci bersama",s_push:"Kirim semua ke Sheet",s_pull:"Ambil dari Sheet",s_sync_h:"Lihat README untuk pengaturan Apps Script 5 menit. Kirim menimpa Sheet dengan data browser ini; Ambil menimpa data browser dengan Sheet.",
-imp_done:"Diimpor {n} catatan baru, {d} duplikat dilewati.",imp_err:"File tidak dapat dibaca.",no_lib:"Pustaka Excel belum termuat (perlu internet sekali).",cleared:"Semua data dihapus",confirmclr:"Hapus SEMUA catatan dari browser ini? Ekspor cadangan dulu.",synced:"Sinkron selesai",sync_err:"Sinkron gagal — periksa URL / kunci",
+imp_done:"Diimpor {n} catatan baru, {d} duplikat dilewati.",imp_err:"File tidak dapat dibaca.",no_lib:"Pustaka Excel belum termuat (perlu internet sekali).",cleared:"Semua data dihapus",confirmclr:"Hapus SEMUA catatan dari browser ini? Ekspor cadangan dulu.",confirmpush:"Browser ini tidak punya catatan. Mengirim akan MENGHAPUS Sheet. Lanjutkan?",synced:"Sinkron selesai",sync_err:"Sinkron gagal — periksa URL / kunci",
 lt_lang:"Bahasa surat",lt_id:"Bahasa Indonesia",lt_en:"Inggris",lt_both:"Dwibahasa",print:"Cetak / Simpan PDF",close:"Tutup",
-cat_glasses:"Kacamata / pelindung mata",cat_smoking:"Merokok",cat_permit:"Izin kerja / PTW",cat_height:"Kerja di ketinggian / harness",cat_ppe:"APD lainnya",cat_vehicle:"Kendaraan / angkat / lalu lintas",cat_other:"Lainnya"}
+cat_glasses:"Kacamata / pelindung mata",cat_smoking:"Merokok",cat_permit:"Izin kerja / PTW",cat_height:"Kerja di ketinggian / harness",cat_ppe:"APD lainnya",cat_vehicle:"Kendaraan / angkat / lalu lintas",cat_other:"Lainnya"},
+ms:{title:"Rekod Disiplin",sub:"Amaran Keselamatan Tapak · SP1 / SP2 / SP3",t_dash:"Papan Pemuka",t_reg:"Daftar",t_new:"Amaran Baharu",t_wk:"Sejarah Pekerja",t_legal:"Rujukan Undang-undang",t_set:"Tetapan",
+k_total:"Amaran direkodkan",k_workers:"Pekerja direkodkan",k_sp1:"Pekerja dengan SP1 aktif",k_sp2:"Pekerja dengan SP2 aktif",k_sp3:"Pekerja dengan SP3 aktif (akhir)",k_zt:"Rekod toleransi sifar",k_flag:"Tanda urutan SP",
+c_company:"Mengikut syarikat",c_month:"12 bulan terakhir",c_cat:"Mengikut jenis pelanggaran",watch:"Senarai pantau — SP2 / SP3 aktif",watch_none:"Tiada pekerja yang kini mempunyai SP2 atau SP3 aktif.",
+th_no:"#",th_date:"Tarikh",th_co:"Syarikat",th_name:"Nama",th_id:"No. ID",th_pos:"Jawatan",th_lvl:"Tahap",th_viol:"Pelanggaran",th_by:"Diberikan oleh",th_chk:"Semakan urutan",th_act:"",th_until:"Sah hingga",th_cur:"Kini",th_cnt:"Rekod",
+search:"Cari nama, ID, pelanggaran…",all_co:"Semua syarikat",all_lvl:"Semua tahap",all_chk:"Semua semakan",only_flag:"Yang ditandakan sahaja",only_active:"Amaran aktif sahaja",
+lv1:"SP1 — amaran ke-1",lv2:"SP2 — amaran ke-2",lv3:"SP3 — amaran ke-3 (akhir)",lvZT:"Pelanggaran toleransi sifar",
+st_ok:"Selaras",st_skipped:"Melangkau tahap",st_repeat:"Ulangan tahap lebih rendah",st_phk:"Pelanggaran ketika SP3 aktif — semak PHK",st_zt:"Toleransi sifar — semak segera",
+st_skipped_d:"Berlabel SP{n} tetapi urutan sepatutnya SP{e}",st_repeat_d:"SP{e} dijangka — SP terdahulu masih sah",
+edit:"Ubah",del:"Padam",letter:"Surat",prev:"Sebelumnya",next:"Seterusnya",page:"Halaman",of:"daripada",rows:"rekod",none:"Belum ada rekod. Gunakan Tetapan → Import Excel, atau tambah Amaran Baharu.",
+f_new:"Rekod amaran keselamatan",f_edit:"Ubah rekod amaran",f_date:"Tarikh pelanggaran",f_co:"Syarikat (majikan)",f_name:"Nama",f_id:"Nombor pengenalan (ID)",f_pos:"Jawatan / kemahiran / pangkat",f_lvl:"Tahap amaran",f_viol:"Huraikan pelanggaran keselamatan",f_by:"Amaran diberikan oleh",f_ack:"Pengesahan terima pekerja",
+ack0:"Belum ditandatangani",ack1:"Ditandatangani pekerja",ack2:"Enggan menandatangani (disaksikan)",save:"Simpan",saveprint:"Simpan & cetak surat",cancel:"Batal",apply:"Guna tahap disyorkan",saved:"Disimpan",deleted:"Dipadam",confirmdel:"Padam rekod ini?",req:"Sila isi semua ruangan wajib.",
+rec_title:"Langkah seterusnya yang disyorkan",rec_none:"Tiada amaran terdahulu, atau semuanya telah tamat → keluarkan SP1.",rec_next:"SP{a} aktif (dikeluarkan {d}, sah hingga {u}) → keluarkan SP{n}.",rec_phk:"SP3 aktif (dikeluarkan {d}, sah hingga {u}) → pelanggaran seterusnya membuka ruang semakan PHK di bawah Pasal 154A ayat (1) huruf k UU 6/2023. Rujuk HR / pasukan undang-undang kontraktor sebelum sebarang langkah penamatan.",rec_zt:"Toleransi sifar: semak sama ada pelanggaran ini disenaraikan sebagai 'pelanggaran bersifat mendesak' dalam PK / PP / PKB kontraktor (PP 35/2021 Pasal 52 ayat (2)). Jika tidak, layan mengikut tangga SP biasa.",
+w_search:"Cari pekerja…",w_pick:"Pilih pekerja di sebelah kiri.",w_cur:"Status semasa",w_cur_none:"Tiada amaran aktif",w_next:"Jika pelanggaran baharu berlaku hari ini",w_hist:"Sejarah amaran",w_valid:"sah {a} → {b}",w_expired:"tamat tempoh",w_active:"aktif",
+legal_h:"Rujukan undang-undang — SP1 / SP2 / SP3 di Indonesia",
+s_h1:"Peraturan",s_months:"Tempoh sah SP (bulan)",s_months_h:"Lalai 6 bulan (had maksimum PP 35/2021 Pasal 52 ayat (1)) melainkan PK / PP / PKB kontraktor menetapkan tempoh lain.",s_issuer:"'Diberikan oleh' lalai",s_emp:"Kepala surat — syarikat",s_h2:"Data",s_imp:"Import Excel / JSON",s_exp:"Eksport Excel",s_bak:"Sandaran (JSON)",s_clr:"Padam semua data",s_imp_h:"Import membaca eksport Microsoft Forms (lajur sama dengan Site Safety Warning Record). Pendua dilangkau. Data kekal dalam pelayar ini.",
+s_h3:"Segerak Google Sheets (pilihan, percuma)",s_url:"URL web-app Apps Script",s_key:"Kunci dikongsi",s_push:"Hantar semua ke Sheet",s_pull:"Ambil dari Sheet",s_sync_h:"Lihat README untuk persediaan Apps Script 5 minit. Hantar menggantikan Sheet dengan data pelayar ini; Ambil menggantikan data pelayar dengan Sheet.",
+imp_done:"Diimport {n} rekod baharu, {d} pendua dilangkau.",imp_err:"Fail tidak dapat dibaca.",no_lib:"Pustaka Excel belum dimuatkan (perlukan internet sekali).",cleared:"Semua data dipadam",confirmclr:"Padam SEMUA rekod daripada pelayar ini? Eksport sandaran dahulu.",confirmpush:"Pelayar ini tiada rekod. Menghantar akan MEMADAM Sheet. Teruskan?",synced:"Segerak selesai",sync_err:"Segerak gagal — semak URL / kunci",
+lt_lang:"Bahasa surat",lt_id:"Bahasa Indonesia",lt_en:"Inggeris",lt_both:"Dwibahasa",print:"Cetak / Simpan PDF",close:"Tutup",
+cat_glasses:"Cermin mata / pelindung mata",cat_smoking:"Merokok",cat_permit:"Permit kerja / PTW",cat_height:"Kerja di tempat tinggi / harness",cat_ppe:"PPE lain",cat_vehicle:"Kenderaan / angkat / lalu lintas",cat_other:"Lain-lain"}
 };
 
 /* ---------- state ---------- */
-let S={records:[],settings:{months:6,lang:"en",issuer:"",employer:"PT EcoOils Jaya Indonesia",syncUrl:"",syncKey:""}};
+let S={records:[],settings:{months:6,lang:"en",issuer:"",employer:"PT EcoOils Jaya Indonesia",syncUrl:DEFAULT_SYNC_URL,syncKey:""}};
 let UI={tab:"dash",page:1,per:50,f:{q:"",co:"",lv:"",chk:"",active:false},wsel:null,wq:"",edit:null,ltLang:"both",lmId:null};
 let A=null; // analysis cache
-function load(){try{const j=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(j&&j.records){S.records=j.records;Object.assign(S.settings,j.settings||{})}}catch(e){}}
+function load(){try{const j=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(j&&j.records){S.records=j.records;Object.assign(S.settings,j.settings||{})}}catch(e){}if(!S.settings.syncUrl)S.settings.syncUrl=DEFAULT_SYNC_URL}
 function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}A=null}
 const t=(k,v)=>{let s=(T[S.settings.lang]||T.en)[k];if(s==null)s=T.en[k]||k;if(v)for(const x in v)s=s.split("{"+x+"}").join(v[x]);return s};
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const emptyHTML=()=>'<div class="empty"><i></i>'+esc(t("none"))+"</div>";
 const $=(s,r)=>(r||document).querySelector(s);
 function toast(m){const e=$("#toast");e.textContent=m;e.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.display="none",3200)}
 
@@ -269,7 +309,7 @@ function chk(r){const i=analyze().info.get(r.id);if(!i)return"";let txt=t("st_"+
 
 /* ---------- UI shell ---------- */
 function applyLang(){
-  document.documentElement.lang=S.settings.lang;document.title=t("title");$("#ver").textContent="v"+VERSION;
+  document.documentElement.lang=S.settings.lang;document.title=t("title");$("#pt").textContent=t(UI.tab==="dash"?"title":"t_"+UI.tab);$("#ver").textContent="v"+VERSION;
   document.querySelectorAll("[data-i]").forEach(e=>e.textContent=t(e.dataset.i));
   document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.lang===S.settings.lang));
 }
@@ -281,7 +321,7 @@ function render(){applyLang();({dash:rDash,reg:rReg,new:rNew,wk:rWk,legal:rLegal
 function stackBar(counts,max){return'<span class="trk">'+["1","2","3","ZT"].map(l=>counts[l]?'<i class="s'+l+'" style="width:'+(counts[l]/max*100)+'%" title="'+lvLabel(l)+': '+counts[l]+'"></i>':"").join("")+"</span>"}
 function rDash(){
   const a=analyze(),R=S.records,el=$("#tab-dash");
-  if(!R.length){el.innerHTML='<div class="card muted">'+esc(t("none"))+"</div>";return}
+  if(!R.length){el.innerHTML=emptyHTML();return}
   const w1=a.workers.filter(w=>w.cur===1).length,w2=a.workers.filter(w=>w.cur===2).length,w3=a.workers.filter(w=>w.cur===3).length;
   const zt=R.filter(r=>r.level==="ZT").length,flags=R.filter(r=>{const s=a.info.get(r.id).status;return s==="skipped"||s==="repeat"||s==="phk"}).length;
   const kp=(c,n,l)=>'<div class="kpi '+c+'"><b>'+n+"</b><span>"+esc(t(l))+"</span></div>";
@@ -330,7 +370,7 @@ function rReg(){
    +'<label style="display:flex;gap:6px;align-items:center;margin:0;white-space:nowrap"><input type="checkbox" id="fac" style="width:auto"'+(f.active?" checked":"")+"> "+esc(t("only_active"))+"</label></div>"
    +'<div class="muted" style="margin-bottom:6px">'+list.length+" "+esc(t("rows"))+"</div>"
    +(rows.length?'<div class="tw"><table><tr><th>'+["th_no","th_date","th_co","th_name","th_id","th_pos","th_lvl","th_viol","th_by","th_chk","th_act"].map(k=>"<th>"+esc(t(k))+"</th>").join("").replace(/^<th>/,"")+"</tr>"
-   +rows.map(r=>"<tr><td>"+r.id+"</td><td>"+fmt(r.date)+"</td><td>"+esc(r.company)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.empId)+"</td><td>"+esc(r.position)+"</td><td>"+badge(r.level)+'</td><td class="v">'+esc(r.violation)+"</td><td>"+esc(r.givenBy)+"</td><td>"+chk(r)+'</td><td style="white-space:nowrap"><button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+'</button> <button class="btn sm sec" data-e="'+r.id+'">'+esc(t("edit"))+'</button> <button class="btn sm dng" data-d="'+r.id+'">'+esc(t("del"))+"</button></td></tr>").join("")+"</table></div>":'<p class="muted">'+esc(t("none"))+"</p>")
+   +rows.map(r=>"<tr><td>"+r.id+"</td><td>"+fmt(r.date)+"</td><td>"+esc(r.company)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.empId)+"</td><td>"+esc(r.position)+"</td><td>"+badge(r.level)+'</td><td class="v">'+esc(r.violation)+"</td><td>"+esc(r.givenBy)+"</td><td>"+chk(r)+'</td><td style="white-space:nowrap"><button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+'</button> <button class="btn sm sec" data-e="'+r.id+'">'+esc(t("edit"))+'</button> <button class="btn sm dng" data-d="'+r.id+'">'+esc(t("del"))+"</button></td></tr>").join("")+"</table></div>":emptyHTML())
    +'<div class="pager"><button class="btn sm sec" id="pp"'+(UI.page<=1?" disabled":"")+">"+esc(t("prev"))+"</button><span>"+esc(t("page"))+" "+UI.page+" "+esc(t("of"))+" "+pages+'</span><button class="btn sm sec" id="pn"'+(UI.page>=pages?" disabled":"")+">"+esc(t("next"))+"</button></div></div>";
   const rf=()=>{UI.page=1;rReg()};
   $("#fq").oninput=e=>{f.q=e.target.value;UI.page=1;const p=e.target.selectionStart;rReg();const n=$("#fq");n.focus();n.setSelectionRange(p,p)};
@@ -406,31 +446,34 @@ function rWk(){
 /* ---------- legal reference ---------- */
 const URG_ID=["Penipuan, pencurian, atau penggelapan barang dan/atau uang milik perusahaan","Memberikan keterangan palsu atau yang dipalsukan sehingga merugikan perusahaan","Mabuk, meminum minuman keras, memakai dan/atau mengedarkan narkotika, psikotropika, dan zat adiktif lainnya di lingkungan kerja","Melakukan perbuatan asusila atau perjudian di lingkungan kerja","Menyerang, menganiaya, mengancam, atau mengintimidasi teman sekerja atau pengusaha di lingkungan kerja","Membujuk teman sekerja atau pengusaha untuk melakukan perbuatan yang bertentangan dengan hukum atau perundang-undangan","Dengan ceroboh atau sengaja merusak atau membiarkan dalam keadaan bahaya barang milik perusahaan yang menimbulkan kerugian","Dengan ceroboh atau sengaja membiarkan teman sekerja atau pengusaha dalam keadaan bahaya di tempat kerja","Membongkar atau membocorkan rahasia perusahaan yang seharusnya dirahasiakan, kecuali untuk kepentingan negara","Melakukan perbuatan lainnya di lingkungan perusahaan yang diancam pidana penjara 5 (lima) tahun atau lebih"];
 const URG_EN=["Fraud, theft or embezzlement of company goods and/or money","Giving false or falsified information that harms the company","Intoxication, drinking alcohol, using and/or distributing narcotics, psychotropics or other addictive substances at work","Immoral acts or gambling at work","Attacking, assaulting, threatening or intimidating a co-worker or the employer at work","Inducing a co-worker or the employer to act against the law","Carelessly or deliberately damaging, or leaving in a dangerous condition, company property causing loss","Carelessly or deliberately leaving a co-worker or the employer in danger at the workplace","Disclosing company secrets that should be kept confidential, except in the interest of the state","Any other act at the company that carries a prison sentence of 5 (five) years or more"];
+const URG_MS=["Penipuan, kecurian atau penyelewengan barang dan/atau wang milik syarikat","Memberikan maklumat palsu atau yang dipalsukan sehingga merugikan syarikat","Mabuk, minum minuman keras, menggunakan dan/atau mengedar narkotik, psikotropik dan bahan ketagihan lain di tempat kerja","Melakukan perbuatan tidak bermoral atau perjudian di tempat kerja","Menyerang, mencederakan, mengugut atau menakut-nakutkan rakan sekerja atau majikan di tempat kerja","Memujuk rakan sekerja atau majikan melakukan perbuatan yang bertentangan dengan undang-undang","Dengan cuai atau sengaja merosakkan, atau membiarkan dalam keadaan bahaya, harta syarikat sehingga menyebabkan kerugian","Dengan cuai atau sengaja membiarkan rakan sekerja atau majikan dalam keadaan bahaya di tempat kerja","Membocorkan rahsia syarikat yang sepatutnya dirahsiakan, kecuali demi kepentingan negara","Melakukan perbuatan lain di syarikat yang diancam hukuman penjara 5 (lima) tahun atau lebih"];
 function rLegal(){
-  const id=S.settings.lang==="id",L=(a,b)=>id?a:b,m=+S.settings.months||6;
+  const lg=S.settings.lang,L=(a,b,c)=>lg==="id"?a:lg==="ms"?c:b,m=+S.settings.months||6;
+  const mw=L("bulan","months","bulan"),from=L("bulan sejak terbit","months from issue","bulan dari tarikh dikeluarkan");
   const cite=(h,body)=>'<div class="cite"><b>'+h+"</b>"+body+"</div>";
+  const urg=lg==="id"?URG_ID:lg==="ms"?URG_MS:URG_EN;
   $("#tab-legal").innerHTML='<div class="card legal"><h2>'+esc(t("legal_h"))+"</h2>"
-  +'<div class="note">'+L("Ringkasan informasi, bukan nasihat hukum. Periksa teks resmi di peraturan.go.id / JDIH dan peraturan perusahaan (PP) / PKB kontraktor sebelum mengambil tindakan PHK.","Information summary, not legal advice. Check the official texts at peraturan.go.id / JDIH and the contractor's company regulation (PP) / CBA (PKB) before any termination step.")+"</div>"
-  +"<h3>"+L("1. Tangga peringatan (SP)","1. The warning ladder (SP)")+'</h3><div class="tw"><table><tr><th>'+L("Tingkat","Level")+"</th><th>"+L("Syarat terbit","Trigger")+"</th><th>"+L("Masa berlaku","Validity")+"</th><th>"+L("Akibat","Consequence")+"</th></tr>"
-  +'<tr><td>'+badge("1")+"</td><td>"+L("Pelanggaran PK / PP / PKB, tanpa SP aktif.","Breach of PK / PP / PKB with no active SP.")+"</td><td>"+m+" "+L("bulan","months")+"</td><td>"+L("Pelanggaran lagi saat SP1 berlaku → SP2.","Another breach while SP1 is valid → SP2.")+"</td></tr>"
-  +'<tr><td>'+badge("2")+"</td><td>"+L("Pelanggaran saat SP1 masih berlaku.","Breach while SP1 is still valid.")+"</td><td>"+m+" "+L("bulan sejak terbit","months from issue")+"</td><td>"+L("Pelanggaran lagi saat SP2 berlaku → SP3.","Another breach while SP2 is valid → SP3.")+"</td></tr>"
-  +'<tr><td>'+badge("3")+"</td><td>"+L("Pelanggaran saat SP2 masih berlaku.","Breach while SP2 is still valid.")+"</td><td>"+m+" "+L("bulan sejak terbit","months from issue")+"</td><td>"+L("Pelanggaran lagi saat SP3 berlaku → PHK dapat dilakukan (Pasal 154A ayat (1) huruf k).","Another breach while SP3 is valid → PHK may follow (Pasal 154A(1)(k)).")+"</td></tr>"
-  +'<tr><td>'+badge("ZT")+"</td><td>"+L("Pelanggaran 'zero tolerance' proyek.","Project 'zero tolerance' breach.")+"</td><td>—</td><td>"+L("Hanya dapat langsung PHK bila termasuk pelanggaran bersifat mendesak yang tercantum di PK/PP/PKB (Pasal 52 ayat (2)).","Immediate PHK only if it is a 'pelanggaran bersifat mendesak' listed in the PK/PP/PKB (Pasal 52(2)).")+"</td></tr></table></div>"
-  +"<p class='muted'>"+L("Bila masa berlaku SP sebelumnya sudah lewat, pelanggaran baru kembali dimulai dari SP1. Aplikasi ini menghitung tangga tersebut otomatis dari tanggal tiap catatan.","If the earlier SP has lapsed, a new breach restarts at SP1. This app computes the ladder automatically from each record's date.")+"</p>"
-  +"<h3>"+L("2. Dasar hukum","2. Legal basis")+"</h3>"
-  +cite(L("UU No. 13/2003 tentang Ketenagakerjaan, sebagaimana diubah UU No. 11/2020 → Perppu No. 2/2022 → UU No. 6/2023 — Pasal 154A ayat (1) huruf k","Law 13/2003 (Manpower), as amended by Law 11/2020 → Perppu 2/2022 → Law 6/2023 — Article 154A(1)(k)"),L("PHK dapat terjadi bila pekerja melanggar perjanjian kerja, peraturan perusahaan, atau PKB dan sebelumnya telah diberi surat peringatan pertama, kedua, dan ketiga secara berturut-turut, masing-masing berlaku paling lama 6 (enam) bulan, kecuali ditetapkan lain dalam PK, PP, atau PKB. (Aturan lama ada di Pasal 161 UU 13/2003; sekarang diatur melalui Pasal 154A.)","Termination is possible where a worker breaches the employment agreement, company regulation or CBA and has previously received a first, second and third warning in sequence, each valid for at most 6 months, unless the PK, PP or PKB provides otherwise. (The earlier rule sat in Article 161 of Law 13/2003; it is now carried by Article 154A.)"))
-  +cite(L("PP No. 35/2021 — Pasal 36 huruf k dan Pasal 52 ayat (1)","Gov. Reg. 35/2021 — Article 36(k) and Article 52(1)"),L("Menjabarkan alasan PHK karena pelanggaran ketentuan PK/PP/PKB dengan SP1–SP3 berturut-turut. Penjelasannya mengizinkan PK/PP/PKB menetapkan pelanggaran tertentu yang cukup dengan peringatan pertama dan terakhir (langsung SP3) bila dicantumkan secara tegas. Pekerja yang di-PHK karena alasan ini menerima uang pesangon 0,5×, UPMK 1×, dan UPH (perhitungan mengacu Pasal 40).","Implements termination for breach of PK/PP/PKB after SP1–SP3 in sequence. Its explanation lets the PK/PP/PKB name specific breaches that warrant a 'first and final' warning (straight to SP3) if expressly listed. A worker terminated on this ground receives severance at 0.5×, long-service pay at 1×, and entitlement compensation (UPH); amounts follow Article 40."))
-  +cite(L("PP No. 35/2021 — Pasal 52 ayat (2)–(3): pelanggaran bersifat mendesak","Gov. Reg. 35/2021 — Article 52(2)–(3): urgent violations"),L("Pengusaha dapat langsung melakukan PHK tanpa melalui SP untuk pelanggaran bersifat mendesak yang diatur dalam PK/PP/PKB. Contoh pada Penjelasan:","The employer may terminate directly, without the SP ladder, for 'urgent violations' set out in the PK/PP/PKB. Examples in the Explanation:")+"<ul>"+(id?URG_ID:URG_EN).map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>"+L("Pekerja menerima uang penggantian hak (UPH) dan uang pisah sesuai PK/PP/PKB.","The worker receives entitlement compensation (UPH) and separation pay as set out in the PK/PP/PKB."))
-  +cite(L("PP No. 35/2021 — Pasal 37–40: prosedur PHK","Gov. Reg. 35/2021 — Articles 37–40: termination procedure"),L("Pemberitahuan PHK disampaikan secara sah dan patut paling lambat 14 hari kerja sebelum PHK. Pekerja dapat menolak secara tertulis dengan alasan paling lambat 7 hari kerja setelah menerima pemberitahuan. Bila tidak sepakat: perundingan bipartit, lalu mekanisme penyelesaian perselisihan hubungan industrial.","Notice must be served validly and properly at least 14 working days before termination. The worker may object in writing, with reasons, within 7 working days of receiving it. If not agreed: bipartite negotiation, then the industrial-relations dispute mechanism."))
-  +cite(L("UU No. 1/1970 tentang Keselamatan Kerja — Pasal 12","Law 1/1970 (Work Safety) — Article 12"),L("Tenaga kerja berkewajiban memberi keterangan yang benar, memakai alat perlindungan diri yang diwajibkan, serta memenuhi dan menaati semua syarat keselamatan dan kesehatan kerja. Ini dasar substantif bahwa pelanggaran APD, izin kerja, dsb. adalah pelanggaran aturan yang dapat disanksi SP.","Workers must give truthful information, wear the required personal protective equipment, and comply with all required safety and health conditions. This is the substantive basis for treating PPE, permit and similar breaches as sanctionable rule violations."))
-  +cite(L("Pendukung","Supporting"),L("PP No. 50/2012 (SMK3) dan Permenakertrans No. PER.08/MEN/VII/2010 (APD), serta aturan HSSE Shell / EcoOils yang diwajibkan kepada kontraktor.","Gov. Reg. 50/2012 (SMK3), Permenakertrans PER.08/MEN/VII/2010 (PPE), and the Shell / EcoOils HSSE rules flowed down to contractors."))
-  +"<h3>"+L("3. Catatan praktis untuk proyek ini","3. Practical notes for this project")+"</h3><ul>"
-  +"<li>"+L("Pemberi kerja pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) adalah kontraktor itu sendiri. SP formal menurut Pasal 52 harus diterbitkan oleh pemberi kerja menurut PP/PKB-nya. Surat dari aplikasi ini adalah peringatan keselamatan di lokasi sekaligus bahan rekomendasi bagi kontraktor.","The employer of contractor workers (GSB, WEN, KKS, PBS, etc.) is the contractor itself. A formal SP under Article 52 has to be issued by that employer under its own PP/PKB. The letter from this app is the site-level safety warning and a recommendation to the contractor.")+"</li>"
-  +"<li>"+L("Urutan SP1 → SP2 → SP3 dan masa berlaku (bawaan 6 bulan) harus sesuai PK/PP/PKB kontraktor; ubah di Pengaturan bila berbeda.","The SP1 → SP2 → SP3 sequence and validity (6 months by default) must match the contractor's PK/PP/PKB; change it in Settings if different.")+"</li>"
-  +"<li>"+L("Catat penerimaan: tanda tangan pekerja, atau penolakan yang disaksikan. Sumber yang ditinjau tidak menemukan kewajiban tanda tangan pekerja, tetapi bukti penyampaian melindungi proses bila terjadi sengketa.","Record receipt: the worker's signature, or a witnessed refusal. The sources reviewed found no rule requiring the worker's signature, but proof of delivery protects the process in a dispute.")+"</li>"
-  +"<li>"+L("Pelanggaran 'zero tolerance' proyek (mis. merokok di area kerja) adalah aturan proyek. Langsung PHK hanya sah bila tercakup sebagai pelanggaran bersifat mendesak dalam PK/PP/PKB kontraktor.","Project 'zero tolerance' breaches (e.g. smoking in the work area) are project rules. Immediate PHK is valid only where the contractor's PK/PP/PKB covers it as an urgent violation.")+"</li>"
-  +"<li>"+L("Putusan Mahkamah Konstitusi atas klaster ketenagakerjaan UU Cipta Kerja (2024) dapat mengubah redaksi; cek teks konsolidasi terbaru.","The Constitutional Court's 2024 ruling on the Job Creation Law's manpower cluster may have changed wording; check the latest consolidated text.")+"</li></ul>"
-  +"<h3>"+L("4. Sumber","4. Sources")+"</h3><ul>"
+  +'<div class="note">'+L("Ringkasan informasi, bukan nasihat hukum. Periksa teks resmi di peraturan.go.id / JDIH dan peraturan perusahaan (PP) / PKB kontraktor sebelum mengambil tindakan PHK.","Information summary, not legal advice. Check the official texts at peraturan.go.id / JDIH and the contractor's company regulation (PP) / CBA (PKB) before any termination step.","Ringkasan maklumat, bukan nasihat undang-undang. Semak teks rasmi di peraturan.go.id / JDIH serta peraturan syarikat (PP) / PKB kontraktor sebelum sebarang tindakan PHK.")+"</div>"
+  +"<h3>"+L("1. Tangga peringatan (SP)","1. The warning ladder (SP)","1. Tangga amaran (SP)")+'</h3><div class="tw"><table><tr><th>'+L("Tingkat","Level","Tahap")+"</th><th>"+L("Syarat terbit","Trigger","Syarat dikeluarkan")+"</th><th>"+L("Masa berlaku","Validity","Tempoh sah")+"</th><th>"+L("Akibat","Consequence","Akibat")+"</th></tr>"
+  +'<tr><td>'+badge("1")+"</td><td>"+L("Pelanggaran PK / PP / PKB, tanpa SP aktif.","Breach of PK / PP / PKB with no active SP.","Pelanggaran PK / PP / PKB tanpa SP aktif.")+"</td><td>"+m+" "+mw+"</td><td>"+L("Pelanggaran lagi saat SP1 berlaku → SP2.","Another breach while SP1 is valid → SP2.","Pelanggaran lagi semasa SP1 sah → SP2.")+"</td></tr>"
+  +'<tr><td>'+badge("2")+"</td><td>"+L("Pelanggaran saat SP1 masih berlaku.","Breach while SP1 is still valid.","Pelanggaran semasa SP1 masih sah.")+"</td><td>"+m+" "+from+"</td><td>"+L("Pelanggaran lagi saat SP2 berlaku → SP3.","Another breach while SP2 is valid → SP3.","Pelanggaran lagi semasa SP2 sah → SP3.")+"</td></tr>"
+  +'<tr><td>'+badge("3")+"</td><td>"+L("Pelanggaran saat SP2 masih berlaku.","Breach while SP2 is still valid.","Pelanggaran semasa SP2 masih sah.")+"</td><td>"+m+" "+from+"</td><td>"+L("Pelanggaran lagi saat SP3 berlaku → PHK dapat dilakukan (Pasal 154A ayat (1) huruf k).","Another breach while SP3 is valid → PHK may follow (Pasal 154A(1)(k)).","Pelanggaran lagi semasa SP3 sah → PHK boleh dilakukan (Pasal 154A ayat (1) huruf k).")+"</td></tr>"
+  +'<tr><td>'+badge("ZT")+"</td><td>"+L("Pelanggaran 'zero tolerance' proyek.","Project 'zero tolerance' breach.","Pelanggaran 'toleransi sifar' projek.")+"</td><td>—</td><td>"+L("Hanya dapat langsung PHK bila termasuk pelanggaran bersifat mendesak yang tercantum di PK/PP/PKB (Pasal 52 ayat (2)).","Immediate PHK only if it is a 'pelanggaran bersifat mendesak' listed in the PK/PP/PKB (Pasal 52(2)).","PHK serta-merta hanya jika ia 'pelanggaran bersifat mendesak' yang tersenarai dalam PK/PP/PKB (Pasal 52 ayat (2)).")+"</td></tr></table></div>"
+  +"<p class='muted'>"+L("Bila masa berlaku SP sebelumnya sudah lewat, pelanggaran baru kembali dimulai dari SP1. Aplikasi ini menghitung tangga tersebut otomatis dari tanggal tiap catatan.","If the earlier SP has lapsed, a new breach restarts at SP1. This app computes the ladder automatically from each record's date.","Jika SP terdahulu telah tamat tempoh, pelanggaran baharu bermula semula pada SP1. Aplikasi ini mengira tangga ini secara automatik daripada tarikh setiap rekod.")+"</p>"
+  +"<h3>"+L("2. Dasar hukum","2. Legal basis","2. Asas undang-undang")+"</h3>"
+  +cite(L("UU No. 13/2003 tentang Ketenagakerjaan, sebagaimana diubah UU No. 11/2020 → Perppu No. 2/2022 → UU No. 6/2023 — Pasal 154A ayat (1) huruf k","Law 13/2003 (Manpower), as amended by Law 11/2020 → Perppu 2/2022 → Law 6/2023 — Article 154A(1)(k)","UU No. 13/2003 (Ketenagakerjaan), dipinda oleh UU No. 11/2020 → Perppu No. 2/2022 → UU No. 6/2023 — Pasal 154A ayat (1) huruf k"),L("PHK dapat terjadi bila pekerja melanggar perjanjian kerja, peraturan perusahaan, atau PKB dan sebelumnya telah diberi surat peringatan pertama, kedua, dan ketiga secara berturut-turut, masing-masing berlaku paling lama 6 (enam) bulan, kecuali ditetapkan lain dalam PK, PP, atau PKB. (Aturan lama ada di Pasal 161 UU 13/2003; sekarang diatur melalui Pasal 154A.)","Termination is possible where a worker breaches the employment agreement, company regulation or CBA and has previously received a first, second and third warning in sequence, each valid for at most 6 months, unless the PK, PP or PKB provides otherwise. (The earlier rule sat in Article 161 of Law 13/2003; it is now carried by Article 154A.)","Penamatan boleh berlaku jika pekerja melanggar perjanjian kerja, peraturan syarikat atau PKB dan sebelum itu telah menerima surat amaran pertama, kedua dan ketiga secara berturutan, masing-masing sah selama-lamanya 6 (enam) bulan, kecuali PK, PP atau PKB menetapkan lain. (Peraturan lama terdapat dalam Pasal 161 UU 13/2003; kini dibawa oleh Pasal 154A.)"))
+  +cite(L("PP No. 35/2021 — Pasal 36 huruf k dan Pasal 52 ayat (1)","Gov. Reg. 35/2021 — Article 36(k) and Article 52(1)","PP No. 35/2021 — Pasal 36 huruf k dan Pasal 52 ayat (1)"),L("Menjabarkan alasan PHK karena pelanggaran ketentuan PK/PP/PKB dengan SP1–SP3 berturut-turut. Penjelasannya mengizinkan PK/PP/PKB menetapkan pelanggaran tertentu yang cukup dengan peringatan pertama dan terakhir (langsung SP3) bila dicantumkan secara tegas. Pekerja yang di-PHK karena alasan ini menerima uang pesangon 0,5×, UPMK 1×, dan UPH (perhitungan mengacu Pasal 40).","Implements termination for breach of PK/PP/PKB after SP1–SP3 in sequence. Its explanation lets the PK/PP/PKB name specific breaches that warrant a 'first and final' warning (straight to SP3) if expressly listed. A worker terminated on this ground receives severance at 0.5×, long-service pay at 1×, and entitlement compensation (UPH); amounts follow Article 40.","Menghuraikan alasan PHK kerana melanggar PK/PP/PKB selepas SP1–SP3 berturutan. Penjelasannya membenarkan PK/PP/PKB menetapkan pelanggaran tertentu yang memadai dengan amaran 'pertama dan terakhir' (terus ke SP3) jika dinyatakan dengan jelas. Pekerja yang ditamatkan atas alasan ini menerima pesangon 0.5×, UPMK 1× dan UPH; jumlah mengikut Pasal 40."))
+  +cite(L("PP No. 35/2021 — Pasal 52 ayat (2)–(3): pelanggaran bersifat mendesak","Gov. Reg. 35/2021 — Article 52(2)–(3): urgent violations","PP No. 35/2021 — Pasal 52 ayat (2)–(3): pelanggaran bersifat mendesak"),L("Pengusaha dapat langsung melakukan PHK tanpa melalui SP untuk pelanggaran bersifat mendesak yang diatur dalam PK/PP/PKB. Contoh pada Penjelasan:","The employer may terminate directly, without the SP ladder, for 'urgent violations' set out in the PK/PP/PKB. Examples in the Explanation:","Majikan boleh terus melakukan PHK tanpa tangga SP bagi 'pelanggaran bersifat mendesak' yang diperuntukkan dalam PK/PP/PKB. Contoh dalam Penjelasan:")+"<ul>"+urg.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>"+L("Pekerja menerima uang penggantian hak (UPH) dan uang pisah sesuai PK/PP/PKB.","The worker receives entitlement compensation (UPH) and separation pay as set out in the PK/PP/PKB.","Pekerja menerima wang penggantian hak (UPH) dan wang pisah mengikut PK/PP/PKB."))
+  +cite(L("PP No. 35/2021 — Pasal 37–40: prosedur PHK","Gov. Reg. 35/2021 — Articles 37–40: termination procedure","PP No. 35/2021 — Pasal 37–40: tatacara PHK"),L("Pemberitahuan PHK disampaikan secara sah dan patut paling lambat 14 hari kerja sebelum PHK. Pekerja dapat menolak secara tertulis dengan alasan paling lambat 7 hari kerja setelah menerima pemberitahuan. Bila tidak sepakat: perundingan bipartit, lalu mekanisme penyelesaian perselisihan hubungan industrial.","Notice must be served validly and properly at least 14 working days before termination. The worker may object in writing, with reasons, within 7 working days of receiving it. If not agreed: bipartite negotiation, then the industrial-relations dispute mechanism.","Notis PHK mesti disampaikan secara sah dan wajar sekurang-kurangnya 14 hari bekerja sebelum PHK. Pekerja boleh membantah secara bertulis dengan alasan dalam masa 7 hari bekerja selepas menerima notis. Jika tidak sepakat: rundingan bipartit, kemudian mekanisme penyelesaian pertikaian perhubungan industri."))
+  +cite(L("UU No. 1/1970 tentang Keselamatan Kerja — Pasal 12","Law 1/1970 (Work Safety) — Article 12","UU No. 1/1970 (Keselamatan Kerja) — Pasal 12"),L("Tenaga kerja berkewajiban memberi keterangan yang benar, memakai alat perlindungan diri yang diwajibkan, serta memenuhi dan menaati semua syarat keselamatan dan kesehatan kerja. Ini dasar substantif bahwa pelanggaran APD, izin kerja, dsb. adalah pelanggaran aturan yang dapat disanksi SP.","Workers must give truthful information, wear the required personal protective equipment, and comply with all required safety and health conditions. This is the substantive basis for treating PPE, permit and similar breaches as sanctionable rule violations.","Pekerja wajib memberi keterangan yang benar, memakai alat perlindungan diri yang diwajibkan, serta mematuhi semua syarat keselamatan dan kesihatan kerja. Ini asas substantif bahawa pelanggaran PPE, permit kerja dan sebagainya ialah pelanggaran peraturan yang boleh dikenakan SP."))
+  +cite(L("Pendukung","Supporting","Sokongan"),L("PP No. 50/2012 (SMK3) dan Permenakertrans No. PER.08/MEN/VII/2010 (APD), serta aturan HSSE Shell / EcoOils yang diwajibkan kepada kontraktor.","Gov. Reg. 50/2012 (SMK3), Permenakertrans PER.08/MEN/VII/2010 (PPE), and the Shell / EcoOils HSSE rules flowed down to contractors.","PP No. 50/2012 (SMK3), Permenakertrans PER.08/MEN/VII/2010 (PPE), serta peraturan HSSE Shell / EcoOils yang diwajibkan kepada kontraktor."))
+  +"<h3>"+L("3. Catatan praktis untuk proyek ini","3. Practical notes for this project","3. Nota praktikal untuk projek ini")+"</h3><ul>"
+  +"<li>"+L("Pemberi kerja pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) adalah kontraktor itu sendiri. SP formal menurut Pasal 52 harus diterbitkan oleh pemberi kerja menurut PP/PKB-nya. Surat dari aplikasi ini adalah peringatan keselamatan di lokasi sekaligus bahan rekomendasi bagi kontraktor.","The employer of contractor workers (GSB, WEN, KKS, PBS, etc.) is the contractor itself. A formal SP under Article 52 has to be issued by that employer under its own PP/PKB. The letter from this app is the site-level safety warning and a recommendation to the contractor.","Majikan pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) ialah kontraktor itu sendiri. SP rasmi di bawah Pasal 52 mesti dikeluarkan oleh majikan mengikut PP/PKB-nya. Surat daripada aplikasi ini ialah amaran keselamatan di tapak sekali gus syor kepada kontraktor.")+"</li>"
+  +"<li>"+L("Urutan SP1 → SP2 → SP3 dan masa berlaku (bawaan 6 bulan) harus sesuai PK/PP/PKB kontraktor; ubah di Pengaturan bila berbeda.","The SP1 → SP2 → SP3 sequence and validity (6 months by default) must match the contractor's PK/PP/PKB; change it in Settings if different.","Urutan SP1 → SP2 → SP3 dan tempoh sah (lalai 6 bulan) mesti sepadan dengan PK/PP/PKB kontraktor; ubah di Tetapan jika berbeza.")+"</li>"
+  +"<li>"+L("Catat penerimaan: tanda tangan pekerja, atau penolakan yang disaksikan. Sumber yang ditinjau tidak menemukan kewajiban tanda tangan pekerja, tetapi bukti penyampaian melindungi proses bila terjadi sengketa.","Record receipt: the worker's signature, or a witnessed refusal. The sources reviewed found no rule requiring the worker's signature, but proof of delivery protects the process in a dispute.","Rekodkan penerimaan: tandatangan pekerja, atau keengganan yang disaksikan. Sumber yang disemak tidak menemui kewajipan tandatangan pekerja, tetapi bukti penyampaian melindungi proses jika berlaku pertikaian.")+"</li>"
+  +"<li>"+L("Pelanggaran 'zero tolerance' proyek (mis. merokok di area kerja) adalah aturan proyek. Langsung PHK hanya sah bila tercakup sebagai pelanggaran bersifat mendesak dalam PK/PP/PKB kontraktor.","Project 'zero tolerance' breaches (e.g. smoking in the work area) are project rules. Immediate PHK is valid only where the contractor's PK/PP/PKB covers it as an urgent violation.","Pelanggaran 'toleransi sifar' projek (cth. merokok di kawasan kerja) ialah peraturan projek. PHK serta-merta sah hanya jika PK/PP/PKB kontraktor meliputinya sebagai pelanggaran bersifat mendesak.")+"</li>"
+  +"<li>"+L("Putusan Mahkamah Konstitusi atas klaster ketenagakerjaan UU Cipta Kerja (2024) dapat mengubah redaksi; cek teks konsolidasi terbaru.","The Constitutional Court's 2024 ruling on the Job Creation Law's manpower cluster may have changed wording; check the latest consolidated text.","Keputusan Mahkamah Konstitusi 2024 mengenai kluster ketenagakerjaan UU Cipta Kerja mungkin mengubah perkataan; semak teks disatukan terkini.")+"</li></ul>"
+  +"<h3>"+L("4. Sumber","4. Sources","4. Sumber")+"</h3><ul>"
   +'<li><a href="https://www.hukumonline.com/klinik/a/aturan-pemberian-surat-peringatan-karyawan-lt54f683eedcdf2" target="_blank" rel="noopener">hukumonline — Aturan pemberian surat peringatan karyawan</a></li>'
   +'<li><a href="https://www.hukumonline.com/klinik/a/bolehkah-mengeluarkan-sp-3-tanpa-didahului-sp-1-dan-sp-2-lt560caf1035ab1/" target="_blank" rel="noopener">hukumonline — Bolehkah mengeluarkan SP 3 tanpa didahului SP 1 dan SP 2?</a></li>'
   +'<li><a href="https://www.hukumonline.com/berita/a/kritik-untuk-phk-karena-pelanggaran-bersifat-mendesak-lt65fac3b111ed4/" target="_blank" rel="noopener">hukumonline — Kritik untuk PHK karena pelanggaran bersifat mendesak</a></li>'
@@ -447,7 +490,7 @@ function rSet(){
   ["sm","si","se","su","sk"].forEach(i=>$("#"+i).onchange=sv);
   $("#bi").onclick=()=>$("#fileX").click();$("#bx").onclick=exportXlsx;$("#bb").onclick=()=>download(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}),"disciplinary-backup-"+todayStr()+".json");
   $("#bc").onclick=()=>{if(confirm(t("confirmclr"))){S.records=[];save();toast(t("cleared"));rSet()}};
-  $("#bp").onclick=async()=>{sv();try{const r=await fetch(s.syncUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"replace",key:s.syncKey,records:S.records})});const j=await r.json();if(!j.ok)throw 0;toast(t("synced"))}catch(e){toast(t("sync_err"))}};
+  $("#bp").onclick=async()=>{sv();if(!S.records.length&&!confirm(t("confirmpush")))return;try{const r=await fetch(s.syncUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"replace",key:s.syncKey,records:S.records})});const j=await r.json();if(!j.ok)throw 0;toast(t("synced"))}catch(e){toast(t("sync_err"))}};
   $("#bl").onclick=async()=>{sv();try{const r=await fetch(s.syncUrl+(s.syncUrl.includes("?")?"&":"?")+"key="+encodeURIComponent(s.syncKey));const j=await r.json();if(!j.ok||!Array.isArray(j.records))throw 0;S.records=j.records.map(cleanRec).filter(Boolean);save();toast(t("synced"))}catch(e){toast(t("sync_err"))}};
 }
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}

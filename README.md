@@ -1,8 +1,9 @@
-# EcoOils Project – Disciplinary Record (v1.0.0)
+# EcoOils Project – Disciplinary Record (v1.1.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking under Indonesian labour regulation.
 
-• Single file app: `index.html` (EN / Bahasa Indonesia toggle, version top right)
+• Single file app: `index.html` (EN / ID / MS toggle, version top right above the toggle)
+• Minimal Shell-style interface: Jost, Shell palette, dot-grid watermark (EcoOils standard)
 • Same fields as the Microsoft Forms "Site Safety Warning Record"
 • Automatic SP ladder: validity window (default 6 months), recommended next level, sequence-check flags
 • Printable A4 warning letter (ID / EN / bilingual) with legal basis and signature blocks
@@ -27,3 +28,7 @@ The app ships with NO data. Records live in the browser (localStorage) and, if y
 
 ## Legal note
 Information summary, not legal advice. Contractor workers are employed by the contractor, so a formal SP must be issued by the employer of record under its own PK / PP / PKB. Verify against official texts (peraturan.go.id / JDIH).
+
+## Sync URL and key
+The Apps Script web-app URL is pre-filled in Settings. The shared key is NOT stored in the repo: set `KEY` in Script properties and type the same word in Settings on each device. Without a KEY the Sheet endpoint is open to anyone who has the URL.
+Push replaces the Sheet with this browser's data (the app asks first if the browser is empty). Pull replaces this browser's data with the Sheet.
