@@ -141,6 +141,10 @@ header.eh .eh-d{font-size:11px;letter-spacing:.06em;color:#aaaaaa;line-height:1.
 header.eh .eh-l{display:flex;gap:0;margin:0;padding:0;background:none;border:0}
 header.eh .eh-l button{background:none;color:#6e6b6c;border:0;border-bottom:3px solid transparent;border-radius:0;min-width:44px;min-height:44px;padding:0 8px;margin:0;font:400 15px/1 Jost,system-ui,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;box-shadow:none;opacity:1;text-transform:none}
 header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[aria-pressed="true"]{color:#231f20;font-weight:600;border-bottom-color:#44a276;background:none}
+.pv{display:none;max-width:100%;max-height:340px;margin-top:8px;border:1px solid var(--line);border-radius:8px}
+#pm{display:none;position:fixed;inset:0;background:rgba(35,31,32,.88);z-index:45;overflow:auto;padding:14px;text-align:center}
+#pm.on{display:block}#pm img{max-width:100%;margin-bottom:10px;border-radius:8px;background:#fff}
+#nav{display:none}
 @media(max-width:420px){header.eh .eh-l button{min-width:40px}}
 </style>
 </head>
@@ -151,10 +155,12 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <nav id="nav">
   <button data-tab="dash" data-i="t_dash">Dashboard</button>
   <button data-tab="reg" data-i="t_reg">Register</button>
+  <button data-tab="rev" data-i="t_rev">Review</button>
   <button data-tab="new" data-i="t_new">New Warning</button>
   <button data-tab="wk" data-i="t_wk">Worker History</button>
   <button data-tab="legal" data-i="t_legal">Legal Reference</button>
   <button data-tab="set" data-i="t_set">Settings</button>
+  <button data-tab="out" data-i="t_out">Sign out</button>
 </nav>
 <main>
   <section class="tab" id="tab-dash"></section>
@@ -163,15 +169,18 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
   <section class="tab" id="tab-wk"></section>
   <section class="tab" id="tab-legal"></section>
   <section class="tab" id="tab-set"></section>
+  <section class="tab" id="tab-rev"></section>
+  <section class="tab" id="tab-lg"></section>
 </main>
 <div id="lm"></div>
+<div id="pm"></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileX" accept=".xlsx,.xls,.json" style="display:none">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="1.2.1";
+const VERSION="2.0.0";
 const BUILD_DATE="2026-10-28";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
@@ -244,8 +253,11 @@ cat_glasses:"Cermin mata / pelindung mata",cat_smoking:"Merokok",cat_permit:"Per
 let S={records:[],settings:{months:6,lang:"en",issuer:"",employer:"PT EcoOils Jaya Indonesia",syncUrl:DEFAULT_SYNC_URL,syncKey:""}};
 let UI={tab:"dash",page:1,per:50,f:{q:"",co:"",lv:"",chk:"",active:false},wsel:null,wq:"",edit:null,ltLang:"both",lmId:null};
 let A=null; // analysis cache
-function load(){try{const j=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(j&&j.records){S.records=j.records;Object.assign(S.settings,j.settings||{})}}catch(e){}if(!S.settings.syncUrl)S.settings.syncUrl=DEFAULT_SYNC_URL}
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}A=null}
+function load(){
+  try{const j=JSON.parse(localStorage.getItem(LS_SET)||"null");if(j&&j.settings)Object.assign(S.settings,j.settings)}catch(e){}
+  try{const o=JSON.parse(localStorage.getItem(LS_KEY)||"null");if(o){LEGACY=Array.isArray(o.records)?o.records:[];if(!localStorage.getItem(LS_SET)&&o.settings)["months","lang","issuer","employer"].forEach(k=>{if(o.settings[k]!=null)S.settings[k]=o.settings[k]})}}catch(e){}
+}
+function save(){try{localStorage.setItem(LS_SET,JSON.stringify({settings:{months:S.settings.months,lang:S.settings.lang,issuer:S.settings.issuer,employer:S.settings.employer}}))}catch(e){}A=null}
 const t=(k,v)=>{let s=(T[S.settings.lang]||T.en)[k];if(s==null)s=T.en[k]||k;if(v)for(const x in v)s=s.split("{"+x+"}").join(v[x]);return s};
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const emptyHTML=()=>'<div class="empty"><i></i>'+esc(t("none"))+"</div>";
@@ -267,7 +279,7 @@ function wkey(r){const id=String(r.empId||"").trim();if(id.length>=3&&!/^[-–�
 function analyze(){
   if(A)return A;
   const groups=new Map(),info=new Map(),workers=[],today=todayStr();
-  S.records.forEach(r=>{const k=wkey(r);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)});
+  S.records.forEach(r=>{const k=wkey(r);if(!isVer(r)){info.set(r.id,{key:k,exp:0,status:String(r.status).toLowerCase(),until:"",active:false});return}if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)});
   groups.forEach((arr,k)=>{
     arr.sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
     arr.forEach((r,i)=>{
@@ -291,7 +303,7 @@ function analyze(){
 }
 function recommend(key,date,excludeId){
   let best=null,maxA=0;
-  S.records.forEach(r=>{if(r.id===excludeId||r.level==="ZT"||wkey(r)!==key)return;if(r.date<date&&date<=lastValid(r.date)&&(+r.level>maxA||(+r.level===maxA&&r.date>best.date))){maxA=+r.level;best=r}});
+  S.records.forEach(r=>{if(r.id===excludeId||!isVer(r)||r.level==="ZT"||wkey(r)!==key)return;if(r.date<date&&date<=lastValid(r.date)&&(+r.level>maxA||(+r.level===maxA&&r.date>best.date))){maxA=+r.level;best=r}});
   return{maxA,best,next:Math.min(3,maxA+1),phk:maxA===3};
 }
 function category(v){v=String(v||"").toLowerCase();
@@ -311,19 +323,19 @@ function applyLang(){
   document.querySelectorAll("[data-i]").forEach(e=>e.textContent=t(e.dataset.i));
   document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.lang===S.settings.lang));
 }
-function go(tab){UI.tab=tab;document.querySelectorAll("section.tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+tab));
+function go(tab){tab=gate(tab);UI.tab=tab;document.querySelectorAll("section.tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+tab));
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));render()}
-function render(){applyLang();({dash:rDash,reg:rReg,new:rNew,wk:rWk,legal:rLegal,set:rSet})[UI.tab]()}
+function render(){applyLang();({dash:rDash,reg:isIC()?rIcReg:rReg,new:isIC()?rIcNew:rNew,wk:rWk,legal:rLegal,set:rSet,rev:rRev,lg:rLogin})[UI.tab]()}
 
 /* ---------- dashboard ---------- */
 function stackBar(counts,max){return'<span class="trk">'+["1","2","3","ZT"].map(l=>counts[l]?'<i class="s'+l+'" style="width:'+(counts[l]/max*100)+'%" title="'+lvLabel(l)+': '+counts[l]+'"></i>':"").join("")+"</span>"}
 function rDash(){
-  const a=analyze(),R=S.records,el=$("#tab-dash");
+  const a=analyze(),R=S.records.filter(isVer),el=$("#tab-dash");
   if(!R.length){el.innerHTML=emptyHTML();return}
   const w1=a.workers.filter(w=>w.cur===1).length,w2=a.workers.filter(w=>w.cur===2).length,w3=a.workers.filter(w=>w.cur===3).length;
   const zt=R.filter(r=>r.level==="ZT").length,flags=R.filter(r=>{const s=a.info.get(r.id).status;return s==="skipped"||s==="repeat"||s==="phk"}).length;
   const kp=(c,n,l)=>'<div class="kpi '+c+'"><b>'+n+"</b><span>"+esc(t(l))+"</span></div>";
-  let h='<div class="grid kpis" style="margin-bottom:14px">'+kp("kb",R.length,"k_total")+kp("kb",a.workers.length,"k_workers")+kp("k1",w1,"k_sp1")+kp("k2",w2,"k_sp2")+kp("k3",w3,"k_sp3")+kp("kz",zt,"k_zt")+kp("kb",flags,"k_flag")+"</div>";
+  let h=pendBanner()+'<div class="grid kpis" style="margin-bottom:14px">'+kp("kb",R.length,"k_total")+kp("kb",a.workers.length,"k_workers")+kp("k1",w1,"k_sp1")+kp("k2",w2,"k_sp2")+kp("k3",w3,"k_sp3")+kp("kz",zt,"k_zt")+kp("kb",flags,"k_flag")+"</div>";
   // company
   const byCo={};R.forEach(r=>{const c=r.company||"—";(byCo[c]=byCo[c]||{n:0})[r.level]=(byCo[c][r.level]||0)+1;byCo[c].n++});
   const coList=Object.entries(byCo).sort((x,y)=>y[1].n-x[1].n),mx=coList[0][1].n;
@@ -358,7 +370,7 @@ function filtered(){const a=analyze(),f=UI.f,q=norm(f.q);
   ).sort((x,y)=>y.date.localeCompare(x.date)||y.id-x.id)}
 function rReg(){
   const el=$("#tab-reg"),cos=[...new Set(S.records.map(r=>r.company).filter(Boolean))].sort(),f=UI.f;
-  const lvs=[["","all_lvl"],["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]],chks=[["","all_chk"],["flag","only_flag"],["ok","st_ok"],["skipped","st_skipped"],["repeat","st_repeat"],["phk","st_phk"],["zt","st_zt"]];
+  const lvs=[["","all_lvl"],["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]],chks=[["","all_chk"],["flag","only_flag"],["ok","st_ok"],["skipped","st_skipped"],["repeat","st_repeat"],["phk","st_phk"],["zt","st_zt"],["pending","st_pending"],["rejected","st_rejected"]];
   const list=filtered(),pages=Math.max(1,Math.ceil(list.length/UI.per));UI.page=Math.min(UI.page,pages);
   const rows=list.slice((UI.page-1)*UI.per,UI.page*UI.per);
   el.innerHTML='<div class="card"><div class="bar-f"><input id="fq" placeholder="'+esc(t("search"))+'" value="'+esc(f.q)+'">'
@@ -367,8 +379,8 @@ function rReg(){
    +'<select id="fck">'+chks.map(([v,k])=>'<option value="'+v+'"'+(f.chk===v?" selected":"")+">"+esc(t(k))+"</option>").join("")+"</select>"
    +'<label style="display:flex;gap:6px;align-items:center;margin:0;white-space:nowrap"><input type="checkbox" id="fac" style="width:auto"'+(f.active?" checked":"")+"> "+esc(t("only_active"))+"</label></div>"
    +'<div class="muted" style="margin-bottom:6px">'+list.length+" "+esc(t("rows"))+"</div>"
-   +(rows.length?'<div class="tw"><table><tr><th>'+["th_no","th_date","th_co","th_name","th_id","th_pos","th_lvl","th_viol","th_by","th_chk","th_act"].map(k=>"<th>"+esc(t(k))+"</th>").join("").replace(/^<th>/,"")+"</tr>"
-   +rows.map(r=>"<tr><td>"+r.id+"</td><td>"+fmt(r.date)+"</td><td>"+esc(r.company)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.empId)+"</td><td>"+esc(r.position)+"</td><td>"+badge(r.level)+'</td><td class="v">'+esc(r.violation)+"</td><td>"+esc(r.givenBy)+"</td><td>"+chk(r)+'</td><td style="white-space:nowrap"><button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+'</button> <button class="btn sm sec" data-e="'+r.id+'">'+esc(t("edit"))+'</button> <button class="btn sm dng" data-d="'+r.id+'">'+esc(t("del"))+"</button></td></tr>").join("")+"</table></div>":emptyHTML())
+   +(rows.length?'<div class="tw"><table><tr><th>'+["th_no","th_date","th_co","th_name","th_id","th_pos","th_lvl","th_viol","th_by","th_st","th_chk","th_act"].map(k=>"<th>"+esc(t(k))+"</th>").join("").replace(/^<th>/,"")+"</tr>"
+   +rows.map(r=>"<tr><td>"+r.id+"</td><td>"+fmt(r.date)+"</td><td>"+esc(r.company)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.empId)+"</td><td>"+esc(r.position)+"</td><td>"+badge(r.level)+'</td><td class="v">'+esc(r.violation)+"</td><td>"+esc(r.givenBy)+"</td><td>"+stChip(r)+flagChips(r)+"</td><td>"+chk(r)+'</td><td style="white-space:nowrap"><button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+'</button> '+(r.hasPhoto?'<button class="btn sm sec" data-p="'+r.id+'">'+esc(t("photo"))+'</button> ':'')+'<button class="btn sm sec" data-e="'+r.id+'">'+esc(t("edit"))+'</button> <button class="btn sm dng" data-d="'+r.id+'">'+esc(t("del"))+"</button></td></tr>").join("")+"</table></div>":emptyHTML())
    +'<div class="pager"><button class="btn sm sec" id="pp"'+(UI.page<=1?" disabled":"")+">"+esc(t("prev"))+"</button><span>"+esc(t("page"))+" "+UI.page+" "+esc(t("of"))+" "+pages+'</span><button class="btn sm sec" id="pn"'+(UI.page>=pages?" disabled":"")+">"+esc(t("next"))+"</button></div></div>";
   const rf=()=>{UI.page=1;rReg()};
   $("#fq").oninput=e=>{f.q=e.target.value;UI.page=1;const p=e.target.selectionStart;rReg();const n=$("#fq");n.focus();n.setSelectionRange(p,p)};
@@ -376,7 +388,8 @@ function rReg(){
   $("#pp").onclick=()=>{UI.page--;rReg()};$("#pn").onclick=()=>{UI.page++;rReg()};
   el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>openLetter(+b.dataset.l));
   el.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{UI.edit=+b.dataset.e;go("new")});
-  el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{if(confirm(t("confirmdel"))){S.records=S.records.filter(r=>r.id!==+b.dataset.d);save();toast(t("deleted"));rReg()}});
+  el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>viewPhoto(+b.dataset.p));
+  el.querySelectorAll("[data-d]").forEach(b=>b.onclick=async()=>{if(confirm(t("confirmdel"))){const j=await api("delete",{id:+b.dataset.d});if(!j.ok){toast(errMsg(j));return}await reload();toast(t("deleted"));rReg()}});
 }
 
 /* ---------- new / edit ---------- */
@@ -394,6 +407,7 @@ function rNew(){
    +'<div><label>'+esc(t("f_lvl"))+' <i>*</i></label><select id="nl">'+[["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]].map(([v,k])=>'<option value="'+v+'"'+(r.level===v?" selected":"")+">"+esc(t(k))+"</option>").join("")+"</select></div>"
    +'<div class="full"><div id="reco"></div></div>'
    +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><textarea id="nv">'+esc(r.violation)+"</textarea></div>"
+   +(ed?"":'<div class="full"><label>'+esc(t("ic_photo"))+'</label><input type="file" id="xf" accept="image/*"><img id="xp" class="pv" alt=""></div>')
    +'<div><label>'+esc(t("f_by"))+' <i>*</i></label><input id="nb" value="'+esc(r.givenBy)+'"></div>'
    +'<div><label>'+esc(t("f_ack"))+'</label><select id="na">'+["0","1","2"].map(v=>'<option value="'+v+'"'+((r.ack||"0")===v?" selected":"")+">"+esc(t("ack"+v))+"</option>").join("")+"</select></div></div>"
    +'<div class="row" style="margin-top:14px"><button class="btn" id="sv">'+esc(t("save"))+'</button><button class="btn sec" id="svp">'+esc(t("saveprint"))+'</button><button class="btn sec" id="cx">'+esc(t("cancel"))+"</button></div></div>";
@@ -414,9 +428,13 @@ function rNew(){
   function collect(){
     const o={date:$("#nd").value,company:$("#nc").value,name:$("#nn").value.trim(),empId:$("#ni").value.trim(),position:$("#np").value.trim(),level:$("#nl").value,violation:$("#nv").value.trim(),givenBy:$("#nb").value.trim(),ack:$("#na").value};
     if(!o.date||!o.company||!o.name||!o.empId||!o.position||!o.violation||!o.givenBy){toast(t("req"));return null}return o}
-  function commit(pr){const o=collect();if(!o)return;let id;
-    if(ed){Object.assign(ed,o);id=ed.id}else{id=Math.max(0,...S.records.map(x=>x.id))+1;S.records.push(Object.assign({id},o))}
-    UI.edit=null;save();toast(t("saved"));if(pr){go("reg");openLetter(id)}else go("reg")}
+  async function commit(pr){const o=collect();if(!o)return;
+    $("#sv").disabled=$("#svp").disabled=true;
+    const j=ed?await api("update",{id:ed.id,rec:o}):await api("add",{rec:o,photo:UI.photo||""});
+    $("#sv").disabled=$("#svp").disabled=false;
+    if(!j.ok){toast(errMsg(j));return}
+    const id=ed?ed.id:j.id;UI.edit=null;UI.photo="";await reload();toast(t("saved"));if(pr){go("reg");openLetter(id)}else go("reg")}
+  UI.photo="";bindPhoto("xf","xp");
   $("#sv").onclick=()=>commit(false);$("#svp").onclick=()=>commit(true);$("#cx").onclick=()=>{UI.edit=null;go("reg")};
 }
 
@@ -452,11 +470,11 @@ function rLegal(){
   const urg=lg==="id"?URG_ID:lg==="ms"?URG_MS:URG_EN;
   $("#tab-legal").innerHTML='<div class="card legal"><h2>'+esc(t("legal_h"))+"</h2>"
   +'<div class="note">'+L("Ringkasan informasi, bukan nasihat hukum. Periksa teks resmi di peraturan.go.id / JDIH dan peraturan perusahaan (PP) / PKB kontraktor sebelum mengambil tindakan PHK.","Information summary, not legal advice. Check the official texts at peraturan.go.id / JDIH and the contractor's company regulation (PP) / CBA (PKB) before any termination step.","Ringkasan maklumat, bukan nasihat undang-undang. Semak teks rasmi di peraturan.go.id / JDIH serta peraturan syarikat (PP) / PKB kontraktor sebelum sebarang tindakan PHK.")+"</div>"
-  +"<h3>"+L("1. Tangga peringatan (SP)","1. The warning ladder (SP)","1. Tangga amaran (SP)")+'</h3><div class="tw"><table><tr><th>'+L("Tingkat","Level","Tahap")+"</th><th>"+L("Syarat terbit","Trigger","Syarat dikeluarkan")+"</th><th>"+L("Masa berlaku","Validity","Tempoh sah")+"</th><th>"+L("Akibat","Consequence","Akibat")+"</th></tr>"
+  +rolesHtml(L)+"<h3>"+L("1. Tangga peringatan (SP)","1. The warning ladder (SP)","1. Tangga amaran (SP)")+'</h3><div class="tw"><table><tr><th>'+L("Tingkat","Level","Tahap")+"</th><th>"+L("Syarat terbit","Trigger","Syarat dikeluarkan")+"</th><th>"+L("Masa berlaku","Validity","Tempoh sah")+"</th><th>"+L("Akibat","Consequence","Akibat")+"</th></tr>"
   +'<tr><td>'+badge("1")+"</td><td>"+L("Pelanggaran PK / PP / PKB, tanpa SP aktif.","Breach of PK / PP / PKB with no active SP.","Pelanggaran PK / PP / PKB tanpa SP aktif.")+"</td><td>"+m+" "+mw+"</td><td>"+L("Pelanggaran lagi saat SP1 berlaku → SP2.","Another breach while SP1 is valid → SP2.","Pelanggaran lagi semasa SP1 sah → SP2.")+"</td></tr>"
   +'<tr><td>'+badge("2")+"</td><td>"+L("Pelanggaran saat SP1 masih berlaku.","Breach while SP1 is still valid.","Pelanggaran semasa SP1 masih sah.")+"</td><td>"+m+" "+from+"</td><td>"+L("Pelanggaran lagi saat SP2 berlaku → SP3.","Another breach while SP2 is valid → SP3.","Pelanggaran lagi semasa SP2 sah → SP3.")+"</td></tr>"
-  +'<tr><td>'+badge("3")+"</td><td>"+L("Pelanggaran saat SP2 masih berlaku.","Breach while SP2 is still valid.","Pelanggaran semasa SP2 masih sah.")+"</td><td>"+m+" "+from+"</td><td>"+L("Pelanggaran lagi saat SP3 berlaku → PHK dapat dilakukan (Pasal 154A ayat (1) huruf k).","Another breach while SP3 is valid → PHK may follow (Pasal 154A(1)(k)).","Pelanggaran lagi semasa SP3 sah → PHK boleh dilakukan (Pasal 154A ayat (1) huruf k).")+"</td></tr>"
-  +'<tr><td>'+badge("ZT")+"</td><td>"+L("Pelanggaran 'zero tolerance' proyek.","Project 'zero tolerance' breach.","Pelanggaran 'toleransi sifar' projek.")+"</td><td>—</td><td>"+L("Hanya dapat langsung PHK bila termasuk pelanggaran bersifat mendesak yang tercantum di PK/PP/PKB (Pasal 52 ayat (2)).","Immediate PHK only if it is a 'pelanggaran bersifat mendesak' listed in the PK/PP/PKB (Pasal 52(2)).","PHK serta-merta hanya jika ia 'pelanggaran bersifat mendesak' yang tersenarai dalam PK/PP/PKB (Pasal 52 ayat (2)).")+"</td></tr></table></div>"
+  +'<tr><td>'+badge("3")+"</td><td>"+L("Pelanggaran saat SP2 masih berlaku.","Breach while SP2 is still valid.","Pelanggaran semasa SP2 masih sah.")+"</td><td>"+m+" "+from+"</td><td>"+L("Akses ke lokasi proyek dicabut. Keputusan PHK (Pasal 154A ayat (1) huruf k) ada pada kontraktor sebagai pemberi kerja.","Access to the project site is withdrawn. The decision on PHK (Pasal 154A(1)(k)) is the contractor's, as employer.","Akses ke tapak projek ditarik. Keputusan PHK (Pasal 154A ayat (1) huruf k) di tangan kontraktor sebagai majikan.")+"</td></tr>"
+  +'<tr><td>'+badge("ZT")+"</td><td>"+L("Pelanggaran 'zero tolerance' proyek.","Project 'zero tolerance' breach.","Pelanggaran 'toleransi sifar' projek.")+"</td><td>—</td><td>"+L("Akses ke lokasi proyek langsung dicabut. PHK hanya oleh kontraktor, dan langsung hanya bila termasuk pelanggaran bersifat mendesak dalam PK/PP/PKB (Pasal 52 ayat (2)).","Site access withdrawn at once. Termination is the contractor's decision, and immediate only if it is an 'urgent violation' in the PK/PP/PKB (Article 52(2)).","Akses ke tapak projek ditarik serta-merta. PHK ialah keputusan kontraktor, dan serta-merta hanya jika 'pelanggaran bersifat mendesak' dalam PK/PP/PKB (Pasal 52 ayat (2)).")+"</td></tr></table></div>"
   +"<p class='muted'>"+L("Bila masa berlaku SP sebelumnya sudah lewat, pelanggaran baru kembali dimulai dari SP1. Aplikasi ini menghitung tangga tersebut otomatis dari tanggal tiap catatan.","If the earlier SP has lapsed, a new breach restarts at SP1. This app computes the ladder automatically from each record's date.","Jika SP terdahulu telah tamat tempoh, pelanggaran baharu bermula semula pada SP1. Aplikasi ini mengira tangga ini secara automatik daripada tarikh setiap rekod.")+"</p>"
   +"<h3>"+L("2. Dasar hukum","2. Legal basis","2. Asas undang-undang")+"</h3>"
   +cite(L("UU No. 13/2003 tentang Ketenagakerjaan, sebagaimana diubah UU No. 11/2020 → Perppu No. 2/2022 → UU No. 6/2023 — Pasal 154A ayat (1) huruf k","Law 13/2003 (Manpower), as amended by Law 11/2020 → Perppu 2/2022 → Law 6/2023 — Article 154A(1)(k)","UU No. 13/2003 (Ketenagakerjaan), dipinda oleh UU No. 11/2020 → Perppu No. 2/2022 → UU No. 6/2023 — Pasal 154A ayat (1) huruf k"),L("PHK dapat terjadi bila pekerja melanggar perjanjian kerja, peraturan perusahaan, atau PKB dan sebelumnya telah diberi surat peringatan pertama, kedua, dan ketiga secara berturut-turut, masing-masing berlaku paling lama 6 (enam) bulan, kecuali ditetapkan lain dalam PK, PP, atau PKB. (Aturan lama ada di Pasal 161 UU 13/2003; sekarang diatur melalui Pasal 154A.)","Termination is possible where a worker breaches the employment agreement, company regulation or CBA and has previously received a first, second and third warning in sequence, each valid for at most 6 months, unless the PK, PP or PKB provides otherwise. (The earlier rule sat in Article 161 of Law 13/2003; it is now carried by Article 154A.)","Penamatan boleh berlaku jika pekerja melanggar perjanjian kerja, peraturan syarikat atau PKB dan sebelum itu telah menerima surat amaran pertama, kedua dan ketiga secara berturutan, masing-masing sah selama-lamanya 6 (enam) bulan, kecuali PK, PP atau PKB menetapkan lain. (Peraturan lama terdapat dalam Pasal 161 UU 13/2003; kini dibawa oleh Pasal 154A.)"))
@@ -466,7 +484,7 @@ function rLegal(){
   +cite(L("UU No. 1/1970 tentang Keselamatan Kerja — Pasal 12","Law 1/1970 (Work Safety) — Article 12","UU No. 1/1970 (Keselamatan Kerja) — Pasal 12"),L("Tenaga kerja berkewajiban memberi keterangan yang benar, memakai alat perlindungan diri yang diwajibkan, serta memenuhi dan menaati semua syarat keselamatan dan kesehatan kerja. Ini dasar substantif bahwa pelanggaran APD, izin kerja, dsb. adalah pelanggaran aturan yang dapat disanksi SP.","Workers must give truthful information, wear the required personal protective equipment, and comply with all required safety and health conditions. This is the substantive basis for treating PPE, permit and similar breaches as sanctionable rule violations.","Pekerja wajib memberi keterangan yang benar, memakai alat perlindungan diri yang diwajibkan, serta mematuhi semua syarat keselamatan dan kesihatan kerja. Ini asas substantif bahawa pelanggaran PPE, permit kerja dan sebagainya ialah pelanggaran peraturan yang boleh dikenakan SP."))
   +cite(L("Pendukung","Supporting","Sokongan"),L("PP No. 50/2012 (SMK3) dan Permenakertrans No. PER.08/MEN/VII/2010 (APD), serta aturan HSSE Shell / EcoOils yang diwajibkan kepada kontraktor.","Gov. Reg. 50/2012 (SMK3), Permenakertrans PER.08/MEN/VII/2010 (PPE), and the Shell / EcoOils HSSE rules flowed down to contractors.","PP No. 50/2012 (SMK3), Permenakertrans PER.08/MEN/VII/2010 (PPE), serta peraturan HSSE Shell / EcoOils yang diwajibkan kepada kontraktor."))
   +"<h3>"+L("3. Catatan praktis untuk proyek ini","3. Practical notes for this project","3. Nota praktikal untuk projek ini")+"</h3><ul>"
-  +"<li>"+L("Pemberi kerja pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) adalah kontraktor itu sendiri. SP formal menurut Pasal 52 harus diterbitkan oleh pemberi kerja menurut PP/PKB-nya. Surat dari aplikasi ini adalah peringatan keselamatan di lokasi sekaligus bahan rekomendasi bagi kontraktor.","The employer of contractor workers (GSB, WEN, KKS, PBS, etc.) is the contractor itself. A formal SP under Article 52 has to be issued by that employer under its own PP/PKB. The letter from this app is the site-level safety warning and a recommendation to the contractor.","Majikan pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) ialah kontraktor itu sendiri. SP rasmi di bawah Pasal 52 mesti dikeluarkan oleh majikan mengikut PP/PKB-nya. Surat daripada aplikasi ini ialah amaran keselamatan di tapak sekali gus syor kepada kontraktor.")+"</li>"
+  +"<li>"+L("Pemberi kerja pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) adalah kontraktor itu sendiri. SP formal menurut Pasal 52 harus diterbitkan oleh pemberi kerja menurut PP/PKB-nya. EcoOils hanya mencatat pelanggaran dan mengatur akses ke lokasi proyek; EcoOils tidak memutuskan hubungan kerja.","The employer of contractor workers (GSB, WEN, KKS, PBS, etc.) is the contractor itself. A formal SP under Article 52 has to be issued by that employer under its own PP/PKB. EcoOils only records the violation and controls access to the project site; EcoOils does not end employment.","Majikan pekerja kontraktor (GSB, WEN, KKS, PBS, dll.) ialah kontraktor itu sendiri. SP rasmi di bawah Pasal 52 mesti dikeluarkan oleh majikan mengikut PP/PKB-nya. EcoOils hanya merekod pelanggaran dan mengawal akses ke tapak projek; EcoOils tidak menamatkan pekerjaan.")+"</li>"
   +"<li>"+L("Urutan SP1 → SP2 → SP3 dan masa berlaku (bawaan 6 bulan) harus sesuai PK/PP/PKB kontraktor; ubah di Pengaturan bila berbeda.","The SP1 → SP2 → SP3 sequence and validity (6 months by default) must match the contractor's PK/PP/PKB; change it in Settings if different.","Urutan SP1 → SP2 → SP3 dan tempoh sah (lalai 6 bulan) mesti sepadan dengan PK/PP/PKB kontraktor; ubah di Tetapan jika berbeza.")+"</li>"
   +"<li>"+L("Catat penerimaan: tanda tangan pekerja, atau penolakan yang disaksikan. Sumber yang ditinjau tidak menemukan kewajiban tanda tangan pekerja, tetapi bukti penyampaian melindungi proses bila terjadi sengketa.","Record receipt: the worker's signature, or a witnessed refusal. The sources reviewed found no rule requiring the worker's signature, but proof of delivery protects the process in a dispute.","Rekodkan penerimaan: tandatangan pekerja, atau keengganan yang disaksikan. Sumber yang disemak tidak menemui kewajipan tandatangan pekerja, tetapi bukti penyampaian melindungi proses jika berlaku pertikaian.")+"</li>"
   +"<li>"+L("Pelanggaran 'zero tolerance' proyek (mis. merokok di area kerja) adalah aturan proyek. Langsung PHK hanya sah bila tercakup sebagai pelanggaran bersifat mendesak dalam PK/PP/PKB kontraktor.","Project 'zero tolerance' breaches (e.g. smoking in the work area) are project rules. Immediate PHK is valid only where the contractor's PK/PP/PKB covers it as an urgent violation.","Pelanggaran 'toleransi sifar' projek (cth. merokok di kawasan kerja) ialah peraturan projek. PHK serta-merta sah hanya jika PK/PP/PKB kontraktor meliputinya sebagai pelanggaran bersifat mendesak.")+"</li>"
@@ -479,18 +497,6 @@ function rLegal(){
 }
 
 /* ---------- settings / data ---------- */
-function rSet(){
-  const s=S.settings,el=$("#tab-set");
-  el.innerHTML='<div class="card"><h2>'+esc(t("s_h1"))+'</h2><div class="f2"><div><label>'+esc(t("s_months"))+'</label><input type="number" min="1" max="12" id="sm" value="'+s.months+'"><div class="muted">'+esc(t("s_months_h"))+'</div></div><div><label>'+esc(t("s_issuer"))+'</label><input id="si" value="'+esc(s.issuer)+'"></div><div><label>'+esc(t("s_emp"))+'</label><input id="se" value="'+esc(s.employer)+'"></div></div></div>'
-   +'<div class="card"><h2>'+esc(t("s_h2"))+'</h2><div class="row"><button class="btn" id="bi">'+esc(t("s_imp"))+'</button><button class="btn sec" id="bx">'+esc(t("s_exp"))+'</button><button class="btn sec" id="bb">'+esc(t("s_bak"))+'</button><button class="btn dng" id="bc">'+esc(t("s_clr"))+'</button></div><p class="muted">'+esc(t("s_imp_h"))+"</p></div>"
-   +'<div class="card"><h2>'+esc(t("s_h3"))+'</h2><div class="f2"><div><label>'+esc(t("s_url"))+'</label><input id="su" value="'+esc(s.syncUrl)+'" placeholder="https://script.google.com/macros/s/…/exec"></div><div><label>'+esc(t("s_key"))+'</label><input id="sk" value="'+esc(s.syncKey)+'"></div></div><div class="row" style="margin-top:10px"><button class="btn" id="bp">'+esc(t("s_push"))+'</button><button class="btn sec" id="bl">'+esc(t("s_pull"))+'</button></div><p class="muted">'+esc(t("s_sync_h"))+"</p></div>";
-  const sv=()=>{s.months=Math.min(12,Math.max(1,+$("#sm").value||6));s.issuer=$("#si").value;s.employer=$("#se").value;s.syncUrl=$("#su").value.trim();s.syncKey=$("#sk").value;save()};
-  ["sm","si","se","su","sk"].forEach(i=>$("#"+i).onchange=sv);
-  $("#bi").onclick=()=>$("#fileX").click();$("#bx").onclick=exportXlsx;$("#bb").onclick=()=>download(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}),"disciplinary-backup-"+todayStr()+".json");
-  $("#bc").onclick=()=>{if(confirm(t("confirmclr"))){S.records=[];save();toast(t("cleared"));rSet()}};
-  $("#bp").onclick=async()=>{sv();if(!S.records.length&&!confirm(t("confirmpush")))return;try{const r=await fetch(s.syncUrl,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"replace",key:s.syncKey,records:S.records})});const j=await r.json();if(!j.ok)throw 0;toast(t("synced"))}catch(e){toast(t("sync_err"))}};
-  $("#bl").onclick=async()=>{sv();try{const r=await fetch(s.syncUrl+(s.syncUrl.includes("?")?"&":"?")+"key="+encodeURIComponent(s.syncKey));const j=await r.json();if(!j.ok||!Array.isArray(j.records))throw 0;S.records=j.records.map(cleanRec).filter(Boolean);save();toast(t("synced"))}catch(e){toast(t("sync_err"))}};
-}
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 function cleanRec(r){if(!r||!r.date||!r.name)return null;return{id:+r.id||0,date:String(r.date).slice(0,10),company:r.company||"",name:String(r.name),empId:String(r.empId||""),position:String(r.position||""),level:["1","2","3","ZT"].includes(String(r.level))?String(r.level):"1",violation:String(r.violation||""),givenBy:String(r.givenBy||""),ack:String(r.ack||"0")}}
 function parseLevel(v){v=String(v||"").toLowerCase();if(/zero/.test(v))return"ZT";if(/3rd|third|final|sp\s*-?3|sp\s*-?iii|ketiga/.test(v))return"3";if(/2nd|second|sp\s*-?2|sp\s*-?ii|kedua/.test(v))return"2";return"1"}
@@ -515,19 +521,10 @@ function importRows(rows,keepIds){
   });
   return{n,d};
 }
-$("#fileX").onchange=async e=>{
-  const f=e.target.files[0];e.target.value="";if(!f)return;
-  try{
-    if(/\.json$/i.test(f.name)){const j=JSON.parse(await f.text());const recs=(j.records||[]).map(cleanRec).filter(Boolean);const had=new Set(S.records.map(r=>[r.date,norm(r.name),norm(r.empId),norm(r.violation)].join("|")));let n=0,d=0,id=Math.max(0,...S.records.map(r=>r.id))+1;recs.forEach(r=>{const k=[r.date,norm(r.name),norm(r.empId),norm(r.violation)].join("|");if(had.has(k)){d++;return}r.id=id++;S.records.push(r);n++});save();toast(t("imp_done",{n,d}));render();return}
-    if(!window.XLSX){toast(t("no_lib"));return}
-    const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});const ws=wb.Sheets[wb.SheetNames[0]];
-    const rows=XLSX.utils.sheet_to_json(ws,{defval:""});const r=importRows(rows,!S.records.length);save();toast(t("imp_done",{n:r.n,d:r.d}));render();
-  }catch(err){console.error(err);toast(t("imp_err"))}
-};
 function exportXlsx(){
   if(!window.XLSX){toast(t("no_lib"));return}
   const a=analyze();
-  const rows=S.records.slice().sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id).map(r=>{const i=a.info.get(r.id);return{"ID":r.id,"Date":r.date,"Company":r.company,"Name":r.name,"Identification Number (ID)":r.empId,"Position / Craft/ Rank / Designation / Job Title":r.position,"Warning Count":r.level==="ZT"?"Zero Tolerance Violation":r.level==="1"?"1st Warning Notice":r.level==="2"?"2nd Warning Notice":"3rd Warning Notice (Final)","Describe the Safety Violation":r.violation,"Safety Warning given by":r.givenBy,"Valid until":r.level==="ZT"?"":i.until,"Active today":r.level==="ZT"?"":(i.active?"Yes":"No"),"Ladder expected":r.level==="ZT"?"":"SP"+i.exp,"Sequence check":i.status}});
+  const rows=S.records.filter(isVer).sort((x,y)=>x.date.localeCompare(y.date)||x.id-y.id).map(r=>{const i=a.info.get(r.id);return{"ID":r.id,"Date":r.date,"Company":r.company,"Name":r.name,"Identification Number (ID)":r.empId,"Position / Craft/ Rank / Designation / Job Title":r.position,"Warning Count":r.level==="ZT"?"Zero Tolerance Violation":r.level==="1"?"1st Warning Notice":r.level==="2"?"2nd Warning Notice":"3rd Warning Notice (Final)","Describe the Safety Violation":r.violation,"Safety Warning given by":r.givenBy,"Valid until":r.level==="ZT"?"":i.until,"Active today":r.level==="ZT"?"":(i.active?"Yes":"No"),"Ladder expected":r.level==="ZT"?"":"SP"+i.exp,"Sequence check":i.status}});
   const ws=XLSX.utils.json_to_sheet(rows);
   const wr=a.workers.map(w=>({"Name":w.name,"ID":w.empId,"Company":w.company,"Records":w.total,"Zero tolerance":w.zt,"Active level":w.cur?"SP"+w.cur:"","Valid until":w.curUntil,"Last violation":w.lastDate}));
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Warnings");XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(wr),"Workers");
@@ -543,15 +540,15 @@ function drawLetter(){
   const bi=(i,e)=>mode==="id"?"<p>"+i+"</p>":mode==="en"?"<p>"+e+"</p>":"<p>"+i+'</p><p class="en">'+e+"</p>";
   const lab=(i,e)=>mode==="id"?i:mode==="en"?e:i+" / <i>"+e+"</i>";
   const m=+S.settings.months||6,until=lastValid(r.date);
-  const prior=S.records.filter(x=>x.id!==r.id&&x.level!=="ZT"&&wkey(x)===wkey(r)&&x.date<r.date&&r.date<=lastValid(x.date)).sort((p,q)=>p.date.localeCompare(q.date));
+  const prior=S.records.filter(x=>x.id!==r.id&&isVer(x)&&x.level!=="ZT"&&wkey(x)===wkey(r)&&x.date<r.date&&r.date<=lastValid(x.date)).sort((p,q)=>p.date.localeCompare(q.date));
   const dI=s=>{const [y,mo,d]=s.split("-");return +d+" "+["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"][+mo-1]+" "+y};
   const dE=s=>{const [y,mo,d]=s.split("-");return +d+" "+["January","February","March","April","May","June","July","August","September","October","November","December"][+mo-1]+" "+y};
   const dd=s=>mode==="en"?dE(s):dI(s);
   const L=r.level;
   const cons={1:["Surat peringatan ini adalah peringatan pertama. Apabila dalam masa berlakunya Saudara kembali melakukan pelanggaran, Saudara akan diberikan Surat Peringatan Kedua (SP-II).","This is the first warning. If you commit another violation while it remains valid, you will be issued a Second Warning (SP-II)."],
    2:["Surat peringatan ini adalah peringatan kedua. Apabila dalam masa berlakunya Saudara kembali melakukan pelanggaran, Saudara akan diberikan Surat Peringatan Ketiga dan terakhir (SP-III).","This is the second warning. If you commit another violation while it remains valid, you will be issued a Third and Final Warning (SP-III)."],
-   3:["Surat peringatan ini adalah peringatan ketiga dan terakhir. Apabila dalam masa berlakunya Saudara kembali melakukan pelanggaran, Perusahaan dapat melakukan Pemutusan Hubungan Kerja (PHK) sesuai Pasal 154A ayat (1) huruf k UU No. 6 Tahun 2023 dan PP No. 35 Tahun 2021.","This is the third and final warning. If you commit another violation while it remains valid, the Company may proceed to termination of employment (PHK) under Article 154A(1)(k) of Law 6/2023 and Gov. Reg. 35/2021."],
-   ZT:["Pelanggaran ini termasuk kategori zero tolerance proyek. Perusahaan dapat mengambil tindakan sesuai peraturan perusahaan, termasuk pencabutan izin masuk lokasi proyek dan/atau PHK menurut Pasal 52 ayat (2) PP No. 35 Tahun 2021 apabila pelanggaran tersebut termasuk pelanggaran bersifat mendesak yang diatur dalam perjanjian kerja, peraturan perusahaan, atau PKB.","This violation falls under the project's zero-tolerance category. The Company may take action under company regulations, including withdrawal of site access and/or termination under Article 52(2) of Gov. Reg. 35/2021 where the violation is an urgent violation listed in the employment agreement, company regulation or CBA."]}[L];
+   3:["Surat peringatan ini adalah peringatan ketiga dan terakhir. Dengan surat ini akses Saudara ke lokasi Proyek Mentari dicabut. Keputusan mengenai hubungan kerja Saudara adalah kewenangan perusahaan pemberi kerja (kontraktor) Saudara.","This is the third and final warning. With this letter your access to the Mentari Project site is withdrawn. Decisions on your employment are for your employer (the contractor)."],
+   ZT:["Pelanggaran ini termasuk kategori zero tolerance proyek. Akses Saudara ke lokasi Proyek Mentari dicabut langsung. Keputusan mengenai hubungan kerja Saudara adalah kewenangan perusahaan pemberi kerja (kontraktor) Saudara.","This violation falls under the project's zero-tolerance category. Your access to the Mentari Project site is withdrawn with immediate effect. Decisions on your employment are for your employer (the contractor)."]}[L];
   const titleI=ST.id[L],titleE=ST.en[L];
   const title=mode==="id"?titleI:mode==="en"?titleE:titleI+"<br><i style=\"font-weight:normal;font-size:10.5pt\">"+titleE+"</i>";
   const validBlock=L==="ZT"?"":bi("Surat peringatan ini berlaku selama "+m+" ("+({6:"enam"}[m]||m)+") bulan, sejak <b>"+dI(r.date)+"</b> sampai dengan <b>"+dI(until)+"</b>.","This warning is valid for "+m+" months, from <b>"+dE(r.date)+"</b> until <b>"+dE(until)+"</b>.");
@@ -564,7 +561,7 @@ function drawLetter(){
   +"<table><tr><td>"+lab("Nama","Name")+"</td><td>: <b>"+esc(r.name)+"</b></td></tr><tr><td>"+lab("No. Identitas (ID)","Identification No. (ID)")+"</td><td>: "+esc(r.empId)+"</td></tr><tr><td>"+lab("Jabatan","Position")+"</td><td>: "+esc(r.position)+"</td></tr><tr><td>"+lab("Perusahaan (pemberi kerja)","Company (employer of record)")+"</td><td>: "+esc(r.company)+"</td></tr></table>"
   +bi("tercatat melakukan pelanggaran ketentuan keselamatan kerja sebagai berikut:","is recorded as having committed the following safety violation:")
   +'<div class="box">'+esc(r.violation)+"</div>"
-  +bi("Peringatan ini diterbitkan berdasarkan Pasal 154A ayat (1) huruf k UU No. 13 Tahun 2003 sebagaimana diubah dengan UU No. 6 Tahun 2023, Pasal 36 huruf k dan Pasal 52 PP No. 35 Tahun 2021, Pasal 12 UU No. 1 Tahun 1970 tentang Keselamatan Kerja, serta peraturan perusahaan/PKB dan aturan HSSE proyek yang berlaku.","This warning is issued under Article 154A(1)(k) of Law 13/2003 as amended by Law 6/2023, Articles 36(k) and 52 of Gov. Reg. 35/2021, Article 12 of Law 1/1970 on Work Safety, and the applicable company regulation/CBA and project HSSE rules.")
+  +bi("Pelanggaran ini dicatat oleh EcoOils berdasarkan Pasal 12 UU No. 1 Tahun 1970 tentang Keselamatan Kerja dan aturan HSSE proyek yang berlaku. EcoOils tidak mengangkat atau memberhentikan Saudara; EcoOils mencatat pelanggaran dan mengatur akses ke lokasi proyek. SP formal dan keputusan ketenagakerjaan (termasuk PHK menurut Pasal 154A ayat (1) huruf k UU No. 6 Tahun 2023 dan PP No. 35 Tahun 2021) adalah kewenangan pemberi kerja Saudara.","This violation is recorded by EcoOils under Article 12 of Law 1/1970 on Work Safety and the project HSSE rules. EcoOils does not employ or dismiss you; it records the violation and controls access to the project site. A formal SP and employment decisions (including PHK under Article 154A(1)(k) of Law 6/2023 and Gov. Reg. 35/2021) are for your employer.")
   +validBlock+priorBlock+bi(cons[0],cons[1])
   +bi("Surat ini dibuat untuk diperhatikan dan dipatuhi sebagaimana mestinya.","This letter is issued for your attention and compliance.")
   +'<p style="margin-top:8px">Sei Mangkei, '+(mode==="en"?dE(r.date):dI(r.date))+"</p>"
@@ -574,10 +571,229 @@ function drawLetter(){
   $("#ll").onchange=e=>{UI.ltLang=e.target.value;drawLetter()};$("#lp").onclick=()=>window.print();$("#lc").onclick=()=>{lm.classList.remove("on");lm.innerHTML=""};
 }
 
-/* ---------- boot ---------- */
+/* ========== v2.0 multi-user layer ========== */
+const API=DEFAULT_SYNC_URL,SESS_KEY="ecooils-dr-session",LS_SET="ecooils-disciplinary-settings-v2";
+let ME=null,TOKEN="",LEGACY=[];
+const isIC=()=>!!ME&&ME.role!=="admin";
+const isVer=r=>!r.status||r.status==="Verified";
+Object.assign(T.en,{t_rev:"Review",t_out:"Sign out",t_lg:"Sign in",loading:"Loading…",
+ lg_h:"Sign in",lg_email:"Email address",lg_send:"Send code",lg_code:"6-digit code from the email",lg_in:"Sign in",lg_back:"Back",lg_sent:"If this email is registered, a code has been sent (valid 10 minutes).",lg_info:"Access is by invitation. Use the email address registered by EcoOils HSSE.",
+ e_bad_email:"Enter a valid email address.",e_wait:"Please wait a minute before asking for a new code.",e_limit:"Too many codes today. Try again later.",e_code:"Wrong or expired code.",e_net:"No connection to the server.",e_server:"Server error. Try again.",e_auth:"Session ended. Sign in again.",e_forbidden:"Not allowed.",e_duplicate:"This warning is already recorded (same badge, date and violation).",e_other_company:"This badge ID belongs to another company. Contact EcoOils HSSE.",e_photo:"The photo of the punched ID badge is required.",e_photo_big:"Photo is too large.",e_missing:"Please fill all required fields.",e_future:"The date cannot be in the future.",e_bad_request:"Invalid data.",e_not_found:"Record not found.",e_note:"A reason is required.",e_self:"You cannot remove your own admin access.",
+ ic_h:"Add a warning",ic_co:"Company",ic_badge:"EcoOils ID badge number",ic_badge_h:"The number on the punched ID badge, exactly as in the photo.",ic_photo:"Photo of the punched ID badge",ic_photo_h:"Required. The punched hole must be visible. HSSE checks it against the badge posted in the WhatsApp group.",ic_send:"Send to HSSE",ic_sent:"Sent. EcoOils HSSE will verify it.",
+ ic_known:"Badge on record under {n}. The name is locked.",ic_new:"New badge ID. HSSE will check the badge photo.",ic_other:"This badge ID is registered under another company. Contact EcoOils HSSE.",ic_none:"No active warning on record → SP1.",ic_next:"Active SP{a} (since {d}, valid until {u}) → SP{n}.",ic_phk:"Active SP3 (valid until {u}). This person must already have no access to the project. Contact EcoOils HSSE.",ic_note:"A warning counts only after EcoOils HSSE has verified it against the badge photo. You cannot edit or delete it afterwards; ask HSSE.",
+ st_pending:"Waiting for verification",st_rejected:"Rejected",st_verified:"Verified",th_st:"Status",photo:"Photo",
+ rv_h:"Waiting for verification",rv_none:"Nothing is waiting.",rv_ok:"Verify",rv_no:"Reject",rv_ask:"Reason for rejecting (the IC will see it):",rv_by:"Added by",rv_file:"Name on file for this badge",
+ fl_NAME_MISMATCH:"Name differs from the name on file for this badge",fl_SAME_NAME_NEW_BADGE:"Same name already exists under another badge ID",fl_PHOTO_REUSED:"This photo was already used on another warning",fl_LEVEL_MISMATCH:"Level differs from the ladder",fl_SP3_ACTIVE:"Person already has an active SP3",
+ dash_pend:"{n} warning(s) waiting for your verification",dash_go:"Review",
+ us_h:"Users (who can sign in)",us_email:"Email",us_name:"Name",us_co:"Company",us_role:"Role",us_act:"Active",us_save:"Save user",us_saved:"User saved",us_ic:"IC admin (own company only)",us_admin:"HSSE admin (everything)",us_yes:"yes",us_no:"no",
+ au_h:"Audit log (who did what)",au_show:"Show last 300 entries",
+ lg_h2:"Records saved in this browser (old version)",lg_up:"Upload {n} records from this browser to the server (as verified, legacy)",lg_done:"Uploaded {a} records, {d} already existed.",
+ s_imp_h:"Import reads the Microsoft Forms export. Records go to the server as verified legacy records. Duplicates are skipped.",
+ rec_phk:"Active SP3 (issued {d}, valid until {u}) → the person has no access to the project site. EcoOils does not terminate; the IC decides on employment.",
+ rec_zt:"Zero tolerance (especially an LSR): direct no access to the project site. The IC decides on employment."});
+Object.assign(T.id,{t_rev:"Tinjau",t_out:"Keluar",t_lg:"Masuk",loading:"Memuat…",
+ lg_h:"Masuk",lg_email:"Alamat email",lg_send:"Kirim kode",lg_code:"Kode 6 digit dari email",lg_in:"Masuk",lg_back:"Kembali",lg_sent:"Jika email ini terdaftar, kode telah dikirim (berlaku 10 menit).",lg_info:"Akses dengan undangan. Gunakan alamat email yang didaftarkan HSSE EcoOils.",
+ e_bad_email:"Masukkan alamat email yang valid.",e_wait:"Tunggu semenit sebelum meminta kode baru.",e_limit:"Terlalu banyak kode hari ini. Coba lagi nanti.",e_code:"Kode salah atau kedaluwarsa.",e_net:"Tidak ada koneksi ke server.",e_server:"Kesalahan server. Coba lagi.",e_auth:"Sesi berakhir. Masuk lagi.",e_forbidden:"Tidak diizinkan.",e_duplicate:"Peringatan ini sudah tercatat (badge, tanggal, dan pelanggaran sama).",e_other_company:"ID badge ini milik perusahaan lain. Hubungi HSSE EcoOils.",e_photo:"Foto badge ID yang dilubangi wajib diunggah.",e_photo_big:"Foto terlalu besar.",e_missing:"Mohon isi semua kolom wajib.",e_future:"Tanggal tidak boleh di masa depan.",e_bad_request:"Data tidak valid.",e_not_found:"Catatan tidak ditemukan.",e_note:"Alasan wajib diisi.",e_self:"Anda tidak dapat mencabut akses admin Anda sendiri.",
+ ic_h:"Tambah peringatan",ic_co:"Perusahaan",ic_badge:"Nomor badge ID EcoOils",ic_badge_h:"Nomor pada badge ID yang dilubangi, persis seperti di foto.",ic_photo:"Foto badge ID yang dilubangi",ic_photo_h:"Wajib. Lubang harus terlihat. HSSE mencocokkannya dengan badge yang dikirim di grup WhatsApp.",ic_send:"Kirim ke HSSE",ic_sent:"Terkirim. HSSE EcoOils akan memverifikasi.",
+ ic_known:"Badge tercatat atas nama {n}. Nama dikunci.",ic_new:"ID badge baru. HSSE akan memeriksa foto badge.",ic_other:"ID badge ini terdaftar di perusahaan lain. Hubungi HSSE EcoOils.",ic_none:"Tidak ada peringatan aktif → SP1.",ic_next:"SP{a} aktif (sejak {d}, berlaku s/d {u}) → SP{n}.",ic_phk:"SP3 aktif (berlaku s/d {u}). Orang ini seharusnya sudah tidak punya akses ke proyek. Hubungi HSSE EcoOils.",ic_note:"Peringatan baru dihitung setelah HSSE EcoOils memverifikasinya dengan foto badge. Setelah dikirim tidak dapat diubah atau dihapus; hubungi HSSE.",
+ st_pending:"Menunggu verifikasi",st_rejected:"Ditolak",st_verified:"Terverifikasi",th_st:"Status",photo:"Foto",
+ rv_h:"Menunggu verifikasi",rv_none:"Tidak ada yang menunggu.",rv_ok:"Verifikasi",rv_no:"Tolak",rv_ask:"Alasan penolakan (akan dilihat IC):",rv_by:"Ditambahkan oleh",rv_file:"Nama tercatat untuk badge ini",
+ fl_NAME_MISMATCH:"Nama berbeda dari nama tercatat untuk badge ini",fl_SAME_NAME_NEW_BADGE:"Nama sama sudah ada dengan ID badge lain",fl_PHOTO_REUSED:"Foto ini sudah dipakai pada peringatan lain",fl_LEVEL_MISMATCH:"Tingkat berbeda dari tangga SP",fl_SP3_ACTIVE:"Orang ini sudah punya SP3 aktif",
+ dash_pend:"{n} peringatan menunggu verifikasi Anda",dash_go:"Tinjau",
+ us_h:"Pengguna (yang dapat masuk)",us_email:"Email",us_name:"Nama",us_co:"Perusahaan",us_role:"Peran",us_act:"Aktif",us_save:"Simpan pengguna",us_saved:"Pengguna disimpan",us_ic:"Admin IC (hanya perusahaannya)",us_admin:"Admin HSSE (semua)",us_yes:"ya",us_no:"tidak",
+ au_h:"Log audit (siapa melakukan apa)",au_show:"Tampilkan 300 entri terakhir",
+ lg_h2:"Catatan tersimpan di browser ini (versi lama)",lg_up:"Unggah {n} catatan dari browser ini ke server (sebagai terverifikasi, warisan)",lg_done:"{a} catatan diunggah, {d} sudah ada.",
+ s_imp_h:"Impor membaca ekspor Microsoft Forms. Catatan masuk ke server sebagai catatan warisan terverifikasi. Duplikat dilewati.",
+ rec_phk:"SP3 aktif (terbit {d}, berlaku s/d {u}) → orang ini tidak boleh masuk lokasi proyek. EcoOils tidak memutus hubungan kerja; keputusan ada pada IC.",
+ rec_zt:"Zero tolerance (terutama LSR): langsung tidak boleh masuk lokasi proyek. Keputusan hubungan kerja ada pada IC."});
+Object.assign(T.ms,{t_rev:"Semak",t_out:"Log keluar",t_lg:"Log masuk",loading:"Memuatkan…",
+ lg_h:"Log masuk",lg_email:"Alamat e-mel",lg_send:"Hantar kod",lg_code:"Kod 6 digit daripada e-mel",lg_in:"Log masuk",lg_back:"Kembali",lg_sent:"Jika e-mel ini berdaftar, kod telah dihantar (sah 10 minit).",lg_info:"Akses melalui jemputan. Guna alamat e-mel yang didaftarkan oleh HSSE EcoOils.",
+ e_bad_email:"Masukkan alamat e-mel yang sah.",e_wait:"Tunggu seminit sebelum meminta kod baharu.",e_limit:"Terlalu banyak kod hari ini. Cuba lagi nanti.",e_code:"Kod salah atau tamat tempoh.",e_net:"Tiada sambungan ke pelayan.",e_server:"Ralat pelayan. Cuba lagi.",e_auth:"Sesi tamat. Log masuk semula.",e_forbidden:"Tidak dibenarkan.",e_duplicate:"Amaran ini telah direkodkan (lencana, tarikh dan pelanggaran sama).",e_other_company:"ID lencana ini milik syarikat lain. Hubungi HSSE EcoOils.",e_photo:"Foto lencana ID yang dilubangi diperlukan.",e_photo_big:"Foto terlalu besar.",e_missing:"Sila isi semua ruangan wajib.",e_future:"Tarikh tidak boleh pada masa depan.",e_bad_request:"Data tidak sah.",e_not_found:"Rekod tidak dijumpai.",e_note:"Sebab diperlukan.",e_self:"Anda tidak boleh membuang akses admin sendiri.",
+ ic_h:"Tambah amaran",ic_co:"Syarikat",ic_badge:"Nombor lencana ID EcoOils",ic_badge_h:"Nombor pada lencana ID yang dilubangi, tepat seperti dalam foto.",ic_photo:"Foto lencana ID yang dilubangi",ic_photo_h:"Wajib. Lubang mesti kelihatan. HSSE menyemaknya dengan lencana yang dihantar dalam kumpulan WhatsApp.",ic_send:"Hantar ke HSSE",ic_sent:"Dihantar. HSSE EcoOils akan mengesahkan.",
+ ic_known:"Lencana direkodkan atas nama {n}. Nama dikunci.",ic_new:"ID lencana baharu. HSSE akan menyemak foto lencana.",ic_other:"ID lencana ini didaftarkan di bawah syarikat lain. Hubungi HSSE EcoOils.",ic_none:"Tiada amaran aktif → SP1.",ic_next:"SP{a} aktif (sejak {d}, sah hingga {u}) → SP{n}.",ic_phk:"SP3 aktif (sah hingga {u}). Orang ini sepatutnya sudah tiada akses ke projek. Hubungi HSSE EcoOils.",ic_note:"Amaran hanya dikira selepas HSSE EcoOils mengesahkannya dengan foto lencana. Selepas dihantar ia tidak boleh diubah atau dipadam; hubungi HSSE.",
+ st_pending:"Menunggu pengesahan",st_rejected:"Ditolak",st_verified:"Disahkan",th_st:"Status",photo:"Foto",
+ rv_h:"Menunggu pengesahan",rv_none:"Tiada yang menunggu.",rv_ok:"Sahkan",rv_no:"Tolak",rv_ask:"Sebab penolakan (akan dilihat IC):",rv_by:"Ditambah oleh",rv_file:"Nama dalam rekod untuk lencana ini",
+ fl_NAME_MISMATCH:"Nama berbeza daripada nama dalam rekod untuk lencana ini",fl_SAME_NAME_NEW_BADGE:"Nama sama telah wujud dengan ID lencana lain",fl_PHOTO_REUSED:"Foto ini telah digunakan pada amaran lain",fl_LEVEL_MISMATCH:"Tahap berbeza daripada tangga SP",fl_SP3_ACTIVE:"Orang ini sudah mempunyai SP3 aktif",
+ dash_pend:"{n} amaran menunggu pengesahan anda",dash_go:"Semak",
+ us_h:"Pengguna (yang boleh log masuk)",us_email:"E-mel",us_name:"Nama",us_co:"Syarikat",us_role:"Peranan",us_act:"Aktif",us_save:"Simpan pengguna",us_saved:"Pengguna disimpan",us_ic:"Admin IC (syarikat sendiri sahaja)",us_admin:"Admin HSSE (semua)",us_yes:"ya",us_no:"tidak",
+ au_h:"Log audit (siapa buat apa)",au_show:"Papar 300 entri terakhir",
+ lg_h2:"Rekod disimpan dalam pelayar ini (versi lama)",lg_up:"Muat naik {n} rekod dari pelayar ini ke pelayan (sebagai disahkan, warisan)",lg_done:"{a} rekod dimuat naik, {d} sudah wujud.",
+ s_imp_h:"Import membaca eksport Microsoft Forms. Rekod masuk ke pelayan sebagai rekod warisan yang disahkan. Pendua dilangkau.",
+ rec_phk:"SP3 aktif (dikeluarkan {d}, sah hingga {u}) → orang ini tiada akses ke tapak projek. EcoOils tidak menamatkan pekerjaan; keputusan di tangan IC.",
+ rec_zt:"Toleransi sifar (terutamanya LSR): terus tiada akses ke tapak projek. IC memutuskan mengenai pekerjaan."});
+
+async function api(action,data){
+  let j;
+  try{const r=await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(Object.assign({action,token:TOKEN},data||{}))});j=await r.json()}
+  catch(e){return{ok:false,error:"net"}}
+  if(j&&j.error==="auth"&&ME)signOut();
+  return j||{ok:false,error:"server"};
+}
+const errMsg=j=>{const m=t("e_"+(j&&j.error));return m.indexOf("e_")===0?t("e_server"):m};
+async function reload(){const j=await api("list");if(j.ok){S.records=j.records.map(r=>Object.assign({},r,{id:+r.id}));if(j.me)ME=j.me;A=null}return j}
+function saveSess(){try{localStorage.setItem(SESS_KEY,JSON.stringify({token:TOKEN,me:ME}))}catch(e){}}
+function signOut(){const tk=TOKEN;TOKEN="";ME=null;S.records=[];A=null;try{localStorage.removeItem(SESS_KEY)}catch(e){}
+  if(tk)fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"logout",token:tk})}).catch(()=>{});
+  UI.lg=null;setMode();go("lg")}
+function setMode(){
+  const adm=ME&&ME.role==="admin",show=adm?["dash","reg","rev","new","wk","legal","set"]:ME?["reg","new"]:[];
+  document.querySelectorAll("#nav button").forEach(b=>{b.style.display=(b.dataset.tab==="out"?!!ME:show.includes(b.dataset.tab))?"":"none"});
+  $("#nav").style.display=ME?"flex":"none";
+}
+function gate(tab){if(!ME)return"lg";if(ME.role!=="admin"&&!["reg","new"].includes(tab))return"reg";if(tab==="lg")return ME.role==="admin"?"dash":"reg";return tab}
+const stChip=r=>{const s=r.status||"Verified";return'<span class="st '+(s==="Verified"?"ok":s==="Pending"?"skipped":"zt")+'">'+esc(t("st_"+s.toLowerCase()))+"</span>"+(s==="Rejected"&&r.note?'<div class="muted">'+esc(r.note)+"</div>":"")};
+const flagChips=r=>r.flags?'<div style="margin:4px 0">'+r.flags.split(",").filter(Boolean).map(f=>'<span class="st skipped" style="margin:0 4px 4px 0">'+esc(t("fl_"+f))+"</span>").join("")+"</div>":"";
+function pendBanner(){const n=S.records.filter(r=>r.status==="Pending").length;return n?'<div class="note" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>'+esc(t("dash_pend",{n}))+'</span><button class="btn sm" onclick="go(\'rev\')">'+esc(t("dash_go"))+"</button></div>":""}
+function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",.72))};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("img"))};im.src=url})}
+function bindPhoto(i,p){const f=document.getElementById(i);if(!f)return;f.onchange=async()=>{const file=f.files[0];if(!file)return;try{UI.photo=await shrink(file);const im=document.getElementById(p);im.src=UI.photo;im.style.display="block"}catch(e){UI.photo="";toast(t("e_photo"))}}}
+async function viewPhoto(id){toast(t("loading"));const j=await api("photo",{id});if(!j.ok){toast(errMsg(j));return}
+  const pm=$("#pm");pm.innerHTML='<img src="'+j.data+'" alt=""><br><button class="btn" id="pmc">'+esc(t("close"))+"</button>";pm.classList.add("on");$("#pmc").onclick=()=>{pm.classList.remove("on");pm.innerHTML=""}}
+
+/* ---- login ---- */
+function rLogin(){
+  const el=$("#tab-lg"),L=UI.lg=UI.lg||{step:1,email:""};
+  el.innerHTML='<div class="card" style="max-width:440px;margin:0 auto"><h2>'+esc(t("lg_h"))+"</h2>"+(L.step===1
+   ?'<label>'+esc(t("lg_email"))+'</label><input type="email" id="lge" autocomplete="email" inputmode="email" value="'+esc(L.email)+'"><p class="muted">'+esc(t("lg_info"))+'</p><div id="lgm" class="muted" style="color:var(--black)"></div><div class="row"><button class="btn" id="lgs">'+esc(t("lg_send"))+"</button></div>"
+   :'<p class="muted">'+esc(L.email)+" — "+esc(t("lg_sent"))+'</p><label>'+esc(t("lg_code"))+'</label><input id="lgc" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><div id="lgm" class="muted" style="color:var(--black)"></div><div class="row" style="margin-top:10px"><button class="btn" id="lgv">'+esc(t("lg_in"))+'</button><button class="btn sec" id="lgb">'+esc(t("lg_back"))+"</button></div>")+"</div>";
+  const msg=m=>{$("#lgm").textContent=m||""};
+  if(L.step===1){
+    const go1=async()=>{const em=$("#lge").value.trim();L.email=em;if(!/^\S+@\S+\.\S+$/.test(em)){msg(t("e_bad_email"));return}
+      $("#lgs").disabled=true;msg(t("loading"));const j=await api("reqcode",{email:em});$("#lgs").disabled=false;
+      if(j.ok){L.step=2;rLogin();setTimeout(()=>{const c=$("#lgc");if(c)c.focus()},50)}else msg(errMsg(j))};
+    $("#lgs").onclick=go1;$("#lge").onkeydown=e=>{if(e.key==="Enter")go1()};
+  }else{
+    const go2=async()=>{const code=$("#lgc").value.replace(/\D/g,"");if(code.length!==6){msg(t("e_code"));return}
+      $("#lgv").disabled=true;msg(t("loading"));const j=await api("verify",{email:L.email,code});
+      if(!j.ok){$("#lgv").disabled=false;msg(errMsg(j));return}
+      TOKEN=j.token;ME=j.me;saveSess();const r=await reload();UI.lg=null;setMode();if(!r.ok){msg(errMsg(r));return}go(ME.role==="admin"?"dash":"reg")};
+    $("#lgv").onclick=go2;$("#lgc").onkeydown=e=>{if(e.key==="Enter")go2()};$("#lgb").onclick=()=>{L.step=1;rLogin()};
+  }
+}
+
+/* ---- IC screens ---- */
+function rIcReg(){
+  const el=$("#tab-reg"),q=norm(UI.f.q);
+  const list=S.records.filter(r=>!q||norm([r.name,r.empId,r.violation,r.position].join(" ")).includes(q)).sort((x,y)=>y.date.localeCompare(x.date)||y.id-x.id);
+  const pages=Math.max(1,Math.ceil(list.length/UI.per));UI.page=Math.min(UI.page,pages);const rows=list.slice((UI.page-1)*UI.per,UI.page*UI.per);
+  el.innerHTML='<div class="card"><h2>'+esc(ME.company)+'</h2><div class="bar-f"><input id="fq" placeholder="'+esc(t("search"))+'" value="'+esc(UI.f.q)+'"></div><div class="muted" style="margin-bottom:6px">'+list.length+" "+esc(t("rows"))+"</div>"
+   +(rows.length?'<div class="tw"><table><tr>'+["th_date","th_name","th_id","th_pos","th_lvl","th_viol","th_st",""].map(k=>"<th>"+(k?esc(t(k)):"")+"</th>").join("")+"</tr>"
+   +rows.map(r=>"<tr><td>"+fmt(r.date)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.empId)+"</td><td>"+esc(r.position)+"</td><td>"+badge(r.level)+'</td><td class="v">'+esc(r.violation)+"</td><td>"+stChip(r)+"</td><td>"+(r.hasPhoto?'<button class="btn sm sec" data-p="'+r.id+'">'+esc(t("photo"))+"</button>":"")+"</td></tr>").join("")+"</table></div>":emptyHTML())
+   +'<div class="pager"><button class="btn sm sec" id="pp"'+(UI.page<=1?" disabled":"")+">"+esc(t("prev"))+"</button><span>"+esc(t("page"))+" "+UI.page+" "+esc(t("of"))+" "+pages+'</span><button class="btn sm sec" id="pn"'+(UI.page>=pages?" disabled":"")+">"+esc(t("next"))+"</button></div></div>";
+  $("#fq").oninput=e=>{UI.f.q=e.target.value;UI.page=1;const p=e.target.selectionStart;rIcReg();const n=$("#fq");n.focus();n.setSelectionRange(p,p)};
+  $("#pp").onclick=()=>{UI.page--;rIcReg()};$("#pn").onclick=()=>{UI.page++;rIcReg()};
+  el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>viewPhoto(+b.dataset.p));
+}
+function rIcNew(){
+  const el=$("#tab-new");UI.photo="";let locked=false,tm;
+  el.innerHTML='<div class="card"><h2>'+esc(t("ic_h"))+'</h2><div class="f2">'
+   +'<div><label>'+esc(t("ic_co"))+'</label><input value="'+esc(ME.company)+'" readonly></div>'
+   +'<div><label>'+esc(t("f_date"))+' <i>*</i></label><input type="date" id="id_d" max="'+todayStr()+'" value="'+todayStr()+'"></div>'
+   +'<div><label>'+esc(t("ic_badge"))+' <i>*</i></label><input id="id_b" autocomplete="off" autocapitalize="characters"><div class="muted">'+esc(t("ic_badge_h"))+"</div></div>"
+   +'<div><label>'+esc(t("f_name"))+' <i>*</i></label><input id="id_n" autocomplete="off"></div>'
+   +'<div class="full"><div id="id_lk"></div></div>'
+   +'<div><label>'+esc(t("f_pos"))+' <i>*</i></label><input id="id_p"></div>'
+   +'<div><label>'+esc(t("f_lvl"))+' <i>*</i></label><select id="id_l">'+[["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]].map(([v,k])=>'<option value="'+v+'">'+esc(t(k))+"</option>").join("")+"</select></div>"
+   +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><textarea id="id_v"></textarea></div>'
+   +'<div class="full"><label>'+esc(t("ic_photo"))+' <i>*</i></label><input type="file" id="id_f" accept="image/*"><div class="muted">'+esc(t("ic_photo_h"))+'</div><img id="id_pv" class="pv" alt=""></div></div>'
+   +'<div class="note">'+esc(t("ic_note"))+'</div><div class="row"><button class="btn" id="id_s">'+esc(t("ic_send"))+"</button></div></div>";
+  bindPhoto("id_f","id_pv");
+  const look=async()=>{const b=$("#id_b").value.trim(),box=$("#id_lk"),n=$("#id_n"),btn=$("#id_s");
+    if(b.replace(/[\s.\-_\/]/g,"").length<3){box.innerHTML="";if(locked){n.value="";n.readOnly=false;locked=false}btn.disabled=false;return}
+    const j=await api("lookup",{empId:b,date:$("#id_d").value});if(!j.ok||$("#id_b").value.trim()!==b)return;
+    let cls="r1",msg="";
+    if(j.other){cls="rp";msg=t("ic_other");btn.disabled=true}
+    else{btn.disabled=false;
+      if(j.known){n.value=j.name;n.readOnly=true;locked=true;msg=t("ic_known",{n:j.name})+" ";
+        if(j.phk){cls="rp";msg+=t("ic_phk",{u:fmt(j.until)})}
+        else if(j.maxA){cls="r"+j.next;msg+=t("ic_next",{a:j.maxA,d:fmt(j.since),u:fmt(j.until),n:j.next});$("#id_l").value=String(j.next)}
+        else{msg+=t("ic_none");$("#id_l").value="1"}}
+      else{if(locked){n.value="";n.readOnly=false;locked=false}msg=t("ic_new")}}
+    box.innerHTML='<div class="reco '+cls+'">'+esc(msg)+"</div>"};
+  $("#id_b").oninput=()=>{clearTimeout(tm);tm=setTimeout(look,500)};$("#id_b").onchange=look;$("#id_d").onchange=look;
+  $("#id_s").onclick=async()=>{
+    const o={date:$("#id_d").value,name:$("#id_n").value.trim(),empId:$("#id_b").value.trim(),position:$("#id_p").value.trim(),level:$("#id_l").value,violation:$("#id_v").value.trim()};
+    if(!o.date||!o.name||!o.empId||!o.position||!o.violation){toast(t("req"));return}
+    if(!UI.photo){toast(t("e_photo"));return}
+    const btn=$("#id_s");btn.disabled=true;const j=await api("add",{rec:o,photo:UI.photo});btn.disabled=false;
+    if(!j.ok){toast(errMsg(j));return}
+    toast(t("ic_sent"));UI.photo="";await reload();go("reg")};
+}
+
+/* ---- admin: review queue ---- */
+function rRev(){
+  const el=$("#tab-rev"),list=S.records.filter(r=>r.status==="Pending").sort((x,y)=>(x.addedAt||"").localeCompare(y.addedAt||"")||x.id-y.id);
+  const onFile=r=>{const k=wkey(r),f=S.records.find(x=>x.id!==r.id&&x.status!=="Pending"&&x.status!=="Rejected"&&wkey(x)===k);return f?f.name:""};
+  el.innerHTML='<div class="card"><h2>'+esc(t("rv_h"))+" ("+list.length+")</h2>"+(list.length?"":'<div class="empty"><i></i>'+esc(t("rv_none"))+"</div>")+"</div>"
+   +list.map(r=>{const nf=onFile(r);return'<div class="card" data-id="'+r.id+'"><div class="row" style="justify-content:space-between"><b>#'+r.id+" · "+esc(r.company)+" · "+fmt(r.date)+"</b>"+badge(r.level)+"</div>"
+    +"<div><b>"+esc(r.name)+"</b> · "+esc(r.empId)+" · "+esc(r.position)+"</div>"
+    +'<div style="white-space:pre-wrap;margin:6px 0">'+esc(r.violation)+"</div>"
+    +(nf&&norm(nf)!==norm(r.name)?'<div class="muted">'+esc(t("rv_file"))+": <b>"+esc(nf)+"</b></div>":"")+flagChips(r)
+    +'<div class="muted">'+esc(t("rv_by"))+": "+esc(r.addedBy)+" · "+esc((r.addedAt||"").replace("T"," "))+"</div>"
+    +'<div class="row" style="margin-top:8px"><button class="btn sm sec" data-p="'+r.id+'">'+esc(t("photo"))+'</button><button class="btn sm" data-v="'+r.id+'">'+esc(t("rv_ok"))+'</button><button class="btn sm dng" data-x="'+r.id+'">'+esc(t("rv_no"))+"</button></div></div>"}).join("");
+  el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>viewPhoto(+b.dataset.p));
+  const act=async(id,dec,note)=>{const j=await api("review",{id,decision:dec,note});if(!j.ok){toast(errMsg(j));return}await reload();toast(t("saved"));rRev()};
+  el.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>act(+b.dataset.v,"verify",""));
+  el.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{const n=prompt(t("rv_ask"));if(n&&n.trim())act(+b.dataset.x,"reject",n.trim())});
+}
+
+/* ---- admin: settings, users, audit ---- */
+function rSet(){
+  const s=S.settings,el=$("#tab-set");
+  el.innerHTML='<div class="card"><h2>'+esc(t("s_h1"))+'</h2><div class="f2"><div><label>'+esc(t("s_months"))+'</label><input type="number" min="1" max="12" id="sm" value="'+s.months+'"><div class="muted">'+esc(t("s_months_h"))+'</div></div><div><label>'+esc(t("s_issuer"))+'</label><input id="si" value="'+esc(s.issuer)+'"></div><div><label>'+esc(t("s_emp"))+'</label><input id="se" value="'+esc(s.employer)+'"></div></div></div>'
+   +'<div class="card"><h2>'+esc(t("s_h2"))+'</h2><div class="row"><button class="btn" id="bi">'+esc(t("s_imp"))+'</button><button class="btn sec" id="bx">'+esc(t("s_exp"))+'</button><button class="btn sec" id="bb">'+esc(t("s_bak"))+'</button></div><p class="muted">'+esc(t("s_imp_h"))+"</p></div>"
+   +(LEGACY.length?'<div class="card"><h2>'+esc(t("lg_h2"))+'</h2><button class="btn y" id="blg">'+esc(t("lg_up",{n:LEGACY.length}))+"</button></div>":"")
+   +'<div class="card"><h2>'+esc(t("us_h"))+'</h2><div class="tw" id="usl"></div><div class="f2" style="margin-top:12px"><div><label>'+esc(t("us_email"))+'</label><input id="ue" type="email"></div><div><label>'+esc(t("us_name"))+'</label><input id="un"></div><div><label>'+esc(t("us_co"))+'</label><input id="uc" list="dl-c"><datalist id="dl-c">'+COMPANIES.map(c=>"<option>"+esc(c)+"</option>").join("")+'</datalist></div><div><label>'+esc(t("us_role"))+'</label><select id="ur"><option value="ic">'+esc(t("us_ic"))+'</option><option value="admin">'+esc(t("us_admin"))+'</option></select></div><div><label>'+esc(t("us_act"))+'</label><select id="ua"><option value="yes">'+esc(t("us_yes"))+'</option><option value="no">'+esc(t("us_no"))+'</option></select></div></div><div class="row" style="margin-top:10px"><button class="btn" id="us">'+esc(t("us_save"))+"</button></div></div>"
+   +'<div class="card"><h2>'+esc(t("au_h"))+'</h2><button class="btn sec" id="bau">'+esc(t("au_show"))+'</button><div class="tw" id="aul" style="margin-top:10px"></div></div>';
+  const sv=()=>{s.months=Math.min(12,Math.max(1,+$("#sm").value||6));s.issuer=$("#si").value;s.employer=$("#se").value;save()};
+  ["sm","si","se"].forEach(i=>$("#"+i).onchange=sv);
+  $("#bi").onclick=()=>$("#fileX").click();$("#bx").onclick=exportXlsx;$("#bb").onclick=()=>download(new Blob([JSON.stringify({records:S.records,settings:S.settings},null,1)],{type:"application/json"}),"disciplinary-backup-"+todayStr()+".json");
+  const blg=$("#blg");if(blg)blg.onclick=async()=>{blg.disabled=true;const recs=LEGACY.map(cleanRec).filter(Boolean);const j=await api("import",{records:recs});blg.disabled=false;if(!j.ok){toast(errMsg(j));return}
+    try{localStorage.removeItem(LS_KEY)}catch(e){}LEGACY=[];await reload();toast(t("lg_done",{a:j.added,d:j.duplicates}));rSet()};
+  const loadUsers=async()=>{const j=await api("users");if(!j.ok){$("#usl").textContent=errMsg(j);return}
+    $("#usl").innerHTML="<table><tr>"+["us_email","us_name","us_co","us_role","us_act",""].map(k=>"<th>"+(k?esc(t(k)):"")+"</th>").join("")+"</tr>"+j.users.map((u,i)=>"<tr><td>"+esc(u.email)+"</td><td>"+esc(u.name)+"</td><td>"+esc(u.company)+"</td><td>"+esc(u.role)+"</td><td>"+esc(u.active)+'</td><td><button class="btn sm sec" data-u="'+i+'">'+esc(t("edit"))+"</button></td></tr>").join("")+"</table>";
+    $("#usl").querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>{const u=j.users[+b.dataset.u];$("#ue").value=u.email;$("#un").value=u.name;$("#uc").value=u.company;$("#ur").value=u.role;$("#ua").value=u.active==="no"?"no":"yes";$("#ue").scrollIntoView({block:"center"})})};
+  loadUsers();
+  $("#us").onclick=async()=>{const u={email:$("#ue").value.trim(),name:$("#un").value.trim(),company:$("#uc").value.trim(),role:$("#ur").value,active:$("#ua").value};
+    const j=await api("usersave",{user:u});if(!j.ok){toast(errMsg(j));return}toast(t("us_saved"));["ue","un","uc"].forEach(i=>$("#"+i).value="");loadUsers()};
+  $("#bau").onclick=async()=>{const j=await api("audit");if(!j.ok){toast(errMsg(j));return}
+    $("#aul").innerHTML="<table>"+j.rows.map(r=>"<tr><td>"+esc(r[0].replace("T"," "))+"</td><td>"+esc(r[1])+"</td><td>"+esc(r[3])+"</td><td>"+esc(r[4])+'</td><td class="v">'+esc(r[5])+"</td></tr>").join("")+"</table>"};
+}
+function rolesHtml(L){
+  const cite=(h,b)=>'<div class="cite"><b>'+h+"</b>"+b+"</div>";
+  return"<h3>"+L("0. Peran EcoOils di proyek ini","0. EcoOils' role on this project","0. Peranan EcoOils di projek ini")+"</h3>"
+  +cite(L("EcoOils mencatat dan mengatur akses","EcoOils records and controls access","EcoOils merekod dan mengawal akses"),L("EcoOils bukan pemberi kerja pekerja kontraktor dan tidak memutus hubungan kerja. EcoOils mencatat pelanggaran dan mencabut akses ke lokasi proyek. SP formal, PHK, dan pekerjaan di tempat lain adalah kewenangan kontraktor (IC) sebagai pemberi kerja.","EcoOils is not the employer of contractor workers and does not terminate employment. EcoOils records the violation and withdraws access to the project site. A formal SP, PHK, and employment elsewhere are for the contractor (IC) as employer.","EcoOils bukan majikan pekerja kontraktor dan tidak menamatkan pekerjaan. EcoOils merekod pelanggaran dan menarik akses ke tapak projek. SP rasmi, PHK dan pekerjaan di tempat lain ialah hak kontraktor (IC) sebagai majikan."))
+  +cite(L("Aturan akses","Access rules","Peraturan akses"),"<ul><li>"+L("SP1 dan SP2: peringatan dicatat, pekerja tetap boleh bekerja.","SP1 and SP2: the warning is recorded, the worker may continue.","SP1 dan SP2: amaran direkodkan, pekerja boleh terus bekerja.")+"</li><li>"+L("SP3 (peringatan ketiga): tidak ada akses ke lokasi proyek. IC bebas mempekerjakan orang tersebut di tempat lain, bukan di EcoOils.","SP3 (third warning): no access to the project site. The IC is free to employ the person elsewhere, but not at EcoOils.","SP3 (amaran ketiga): tiada akses ke tapak projek. IC bebas menggaji orang itu di tempat lain, bukan di EcoOils.")+"</li><li>"+L("Pelanggaran zero tolerance, terutama LSR: langsung tidak ada akses.","Zero-tolerance violation, especially an LSR: direct no access.","Pelanggaran toleransi sifar, terutamanya LSR: terus tiada akses.")+"</li></ul>")
+  +cite(L("Bukti","Evidence","Bukti"),L("Setiap peringatan memuat nomor badge ID EcoOils dan foto badge yang dilubangi. Peringatan dari IC baru dihitung setelah diverifikasi HSSE EcoOils. Semua perubahan tercatat dalam log audit.","Every warning carries the EcoOils ID badge number and the photo of the punched badge. A warning from an IC counts only after EcoOils HSSE has verified it. All changes are kept in the audit log.","Setiap amaran mengandungi nombor lencana ID EcoOils dan foto lencana yang dilubangi. Amaran daripada IC hanya dikira selepas disahkan oleh HSSE EcoOils. Semua perubahan disimpan dalam log audit."));
+}
+
+/* ---- import (admin) goes to the server ---- */
+async function pushNew(before){
+  const nw=S.records.filter(r=>!before.has(r.id));
+  if(!nw.length){await reload();return{added:0,duplicates:0,ok:true}}
+  const j=await api("import",{records:nw});await reload();return j}
+$("#fileX").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{
+    const before=new Set(S.records.map(r=>r.id));let localDup=0;
+    if(/\.json$/i.test(f.name)){const j=JSON.parse(await f.text());const recs=(j.records||[]).map(cleanRec).filter(Boolean);const had=new Set(S.records.map(r=>[r.date,norm(r.name),norm(r.empId),norm(r.violation)].join("|")));let id=Math.max(0,...S.records.map(r=>r.id))+1;recs.forEach(r=>{const k=[r.date,norm(r.name),norm(r.empId),norm(r.violation)].join("|");if(had.has(k)){localDup++;return}r.id=id++;S.records.push(r)})}
+    else{if(!window.XLSX){toast(t("no_lib"));return}
+      const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});localDup=importRows(rows,false).d}
+    toast(t("loading"));const j=await pushNew(before);
+    if(!j.ok){toast(errMsg(j));return}
+    toast(t("imp_done",{n:j.added,d:j.duplicates+localDup}));render();
+  }catch(err){console.error(err);await reload();toast(t("imp_err"))}
+};
+
+/* ---- boot ---- */
 document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>{S.settings.lang=b.dataset.lang;save();render();if($("#lm").classList.contains("on"))drawLetter()});
-document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.tab));
-load();go("dash");
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>b.dataset.tab==="out"?signOut():go(b.dataset.tab));
+(async()=>{
+  load();
+  try{const s=JSON.parse(localStorage.getItem(SESS_KEY)||"null");if(s&&s.token&&s.me){TOKEN=s.token;ME=s.me}}catch(e){}
+  setMode();
+  if(ME){const j=await reload();if(!j.ok&&j.error!=="net"){ME=null;TOKEN=""}}
+  setMode();go(ME?(ME.role==="admin"?"dash":"reg"):"lg");
+})();
 </script>
 <script>/* eco-std-header */(function(){var v=document.getElementById('ver'),d=document.getElementById('verdate');if(!v||!d)return;function n(){var m=(v.textContent||'').match(/\d+(?:\.\d+)+|\d+/);return m?'v'+m[0]:''}function s(){var x=n();if(x&&v.textContent!==x)v.textContent=x;d.textContent=x?x+' \u00b7 '+d.getAttribute('data-date'):''}s();new MutationObserver(s).observe(v,{childList:true,characterData:true,subtree:true})})();</script>
 </body>

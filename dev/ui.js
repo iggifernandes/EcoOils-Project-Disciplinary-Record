@@ -1,0 +1,69 @@
+const {chromium}=require('playwright');
+const g=require('./gas.js')(__dirname+'/../apps-script/Code.gs');
+const URL='https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec';
+let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
+// tiny jpeg
+const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=','base64');
+(async()=>{
+  const b=await chromium.launch();
+  async function ctxFor(){const c=await b.newContext({viewport:{width:390,height:800}});
+    await c.route(URL,async r=>{const req=r.request();if(req.method()!=='POST')return r.fulfill({status:200,body:'{}'});
+      let out;try{const bd=JSON.parse(req.postData());out=g.post(bd);console.log('API',bd.action,JSON.stringify(out).slice(0,120))}catch(e){console.log('ROUTEERR',e.message);out={ok:false,error:'server'}}r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(out)})});
+    await c.route('**/*xlsx*',r=>r.fulfill({status:200,contentType:'text/javascript',body:''}));
+    await c.route(/fonts\.(googleapis|gstatic)/,r=>r.abort());
+    return c}
+  const errs=[];
+  async function open(c){const p=await c.newPage();p.on('pageerror',e=>{errs.push(e.message);console.log('PAGEERR',e.message)});p.on('console',m=>console.log('console:',m.text()));p.on('console',m=>console.log('console:',m.text()));p.on('dialog',d=>d.accept('badge does not match'));await p.goto('file://'+require('path').resolve(__dirname,'../index.html')+'');return p}
+  async function signin(p,email){g.clearWait();await p.fill('#lge',email);await p.click('#lgs');await p.waitForSelector('#lgc');const code=g.mails.filter(m=>m.to===email).pop().subject.match(/(\d{6})/)[1];await p.fill('#lgc',code);await p.click('#lgv');await p.waitForTimeout(1500);console.log('lgm=',await p.textContent('#lgm').catch(()=>'-'),'| nav:',await p.isVisible('#nav'));await p.waitForSelector('#nav button:visible',{timeout:5000})}
+  // seed users
+  const adm=g.post({action:'verify',email:'x',code:'1'});
+  g.post({action:'reqcode',email:'iggy@example.com'});const A=g.post({action:'verify',email:'iggy@example.com',code:g.mails.pop().subject.match(/(\d{6})/)[1]}).token;
+  g.post({action:'usersave',token:A,user:{email:'gsb@x.com',name:'GSB Admin',company:'GSB',role:'ic'}});
+  // --- IC flow
+  const c1=await ctxFor(),p=await open(c1);
+  ok(await p.isVisible('#lge')&&!(await p.isVisible('#nav')),'signed out: only the login shows');
+  await signin(p,'gsb@x.com');
+  const tabs=await p.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
+  ok(JSON.stringify(tabs)==='["reg","new","out"]','IC sees only reg/new/out: '+tabs);
+  await p.click('#nav [data-tab=new]');
+  await p.fill('#id_d','2026-10-01');await p.fill('#id_b','EO 777');await p.fill('#id_n','Candra Wirawan');await p.fill('#id_p','Welder');await p.fill('#id_v','Welding without face shield');
+  await p.click('#id_s');ok((await p.textContent('#toast')).length>5,'submit without photo refused: '+await p.textContent('#toast'));
+  const tmp='/tmp/badge.jpg';require('fs').writeFileSync(tmp,JPG);
+  await p.setInputFiles('#id_f',tmp);await p.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');
+  await p.click('#id_s');await p.waitForSelector('#tab-reg.on table');
+  ok((await p.textContent('#tab-reg')).includes('Candra Wirawan')&&(await p.textContent('#tab-reg')).includes('Waiting for verification'),'IC list shows Pending warning');
+  ok(!(await p.innerText('body')).includes('Letter'),'no letter button for IC');
+  // lookup locks name after verify
+  g.post({action:'review',token:A,id:1,decision:'verify'});
+  await p.click('#nav [data-tab=new]');await p.fill('#id_b','eo777');await p.waitForFunction(()=>document.getElementById('id_n').readOnly);
+  ok(await p.inputValue('#id_n')==='Candra Wirawan'&&await p.inputValue('#id_l')==='2','known badge: name locked, level preset SP2');
+  await p.screenshot({path:'/tmp/ic390.png'});
+  await p.click('#nav [data-tab=out]');await p.waitForSelector('#lge');ok(true,'sign out returns to login');
+  // --- Admin flow
+  g.post({action:'add',token:g.post({action:'verify',email:'gsb@x.com',code:(g.post({action:'reqcode',email:'gsb@x.com'}),g.mails.pop().subject.match(/(\d{6})/)[1])}).token||'',rec:{},photo:''});
+  const c2=await ctxFor(),q=await open(c2);
+  await signin(q,'iggy@example.com');
+  const atabs=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
+  ok(atabs.length===8&&atabs.includes('rev')&&atabs.includes('set'),'admin sees all tabs: '+atabs);
+  await q.click('#nav [data-tab=set]');await q.waitForSelector('#usl table');ok((await q.textContent('#usl')).includes('gsb@x.com'),'users list shows IC');
+  await q.click('#nav [data-tab=new]');
+  await q.fill('#nd','2026-10-10');await q.selectOption('#nc','WEN');await q.fill('#nn','Dewi Lestari');await q.fill('#ni','EO 321');await q.fill('#np','Helper');await q.fill('#nv','No gloves');await q.fill('#nb','Iggy');
+  await q.click('#sv');await q.waitForSelector('#tab-reg.on table');ok((await q.textContent('#tab-reg')).includes('Dewi Lestari'),'admin adds a verified warning directly');
+  // IC adds another for review
+  const p2=await open(await ctxFor());await signin(p2,'gsb@x.com');
+  g.post({action:'reqcode',email:'gsb@x.com'});
+  await p2.click('#nav [data-tab=new]');await p2.fill('#id_b','EO 888');await p2.fill('#id_n','Eko Prasetyo');await p2.fill('#id_p','Fitter');await p2.fill('#id_v','No harness');await p2.setInputFiles('#id_f',tmp);await p2.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');await p2.click('#id_s');await p2.waitForSelector('#tab-reg.on table');
+  await q.click('#nav [data-tab=dash]');await q.reload();
+  ok(true,'reload keeps session');
+  await q.waitForSelector('#nav button:visible');
+  await q.click('#nav [data-tab=rev]');await q.waitForSelector('#tab-rev .card[data-id]');
+  ok((await q.textContent('#tab-rev')).includes('Eko Prasetyo'),'review queue shows the IC warning');
+  await q.click('#tab-rev [data-p]');await q.waitForSelector('#pm.on img');ok(true,'badge photo opens');await q.click('#pmc');
+  await q.click('#tab-rev [data-v]');await q.waitForFunction(()=>!document.querySelector('#tab-rev .card[data-id]'));ok(true,'verify empties the queue');
+  await q.click('#nav [data-tab=reg]');ok((await q.textContent('#tab-reg')).includes('Verified'),'register shows Verified');
+  await q.click('#nav [data-tab=legal]');ok((await q.textContent('#tab-legal')).includes("EcoOils' role"),'legal tab has the new role section');
+  await q.screenshot({path:'/tmp/admin390.png',fullPage:false});
+  // languages
+  for(const l of['id','ms']){await q.click('.lang [data-lang='+l+']');await q.click('#nav [data-tab=rev]');}
+  ok(errs.length===0,'no page errors '+errs.join('|'));
+  console.log(fails?'FAILED '+fails:'ALL UI TESTS PASS');await b.close();process.exit(fails?1:0)})();
