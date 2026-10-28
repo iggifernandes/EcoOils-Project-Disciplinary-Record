@@ -21,11 +21,11 @@ const rec={date:'2026-10-20',name:'Budi Santoso',empId:'EO 1234',position:'Rigge
 ok(g.post({action:'add',token:G,rec}).error==='photo','photo mandatory for IC');
 let r=g.post({action:'add',token:G,rec,photo:jpg});ok(r.ok&&r.status==='Pending','IC add -> Pending');
 ok(g.post({action:'add',token:G,rec,photo:jpg}).error==='duplicate','duplicate refused');
-let l=g.post({action:'list',token:G});ok(l.records.length===1&&!('flags' in l.records[0])&&l.records[0].hasPhoto==='1'&&!l.records[0].photoId,'IC sees own, no flags/photoId');
-ok(g.post({action:'list',token:W}).records.length===0,'WEN IC sees nothing of GSB');
+let l=g.post({action:'list',token:G});ok(l.records.length===0,'IC receives NO records (no registry)');
+ok(g.post({action:'list',token:A}).records.length===1,'admin sees the record');
 ok(g.post({action:'lookup',token:W,empId:'EO1234'}).other===true,'lookup from other company reveals nothing');
 ok(g.post({action:'photo',token:W,id:1}).error==='forbidden','other company cannot fetch photo');
-ok(g.post({action:'photo',token:G,id:1}).ok,'own company fetches photo');
+ok(g.post({action:'photo',token:G,id:1}).error==='forbidden','IC cannot fetch any photo');ok(g.post({action:'photo',token:A,id:1}).ok,'admin fetches photo');
 ok(g.post({action:'review',token:G,id:1,decision:'verify'}).error==='forbidden','IC cannot verify');
 ok(g.post({action:'delete',token:G,id:1}).error==='forbidden','IC cannot delete');
 ok(g.post({action:'update',token:G,id:1,rec:{name:'X'}}).error==='forbidden','IC cannot edit');
@@ -33,10 +33,10 @@ ok(g.post({action:'users',token:G}).error==='forbidden','IC cannot list users');
 ok(g.post({action:'import',token:G,records:[]}).error==='forbidden','IC cannot import');
 ok(g.post({action:'list',token:'bogus'}).error==='auth','bad token refused');
 // pending does not count for ladder
-ok(g.post({action:'lookup',token:G,empId:'EO1234',date:'2026-10-25'}).maxA===0,'pending does not count');
+ok(g.post({action:'lookup',token:A,empId:'EO1234',date:'2026-10-25'}).maxA===0,'pending does not count');
 ok(g.post({action:'review',token:A,id:1,decision:'reject'}).error==='note','reject needs a reason');
 ok(g.post({action:'review',token:A,id:1,decision:'verify'}).ok,'admin verifies');
-let lk=g.post({action:'lookup',token:G,empId:'eo-1234',date:'2026-10-25'});ok(lk.known&&lk.maxA===1&&lk.next===2&&lk.name==='Budi Santoso','lookup after verify: SP1 active -> SP2, key normalised');
+let lk=g.post({action:'lookup',token:G,empId:'eo-1234',date:'2026-10-25'});ok(!('name' in lk)&&!('maxA' in lk)&&lk.other===false,'IC lookup leaks no name or level');lk=g.post({action:'lookup',token:A,empId:'eo-1234',date:'2026-10-25'});ok(lk.known&&lk.maxA===1&&lk.next===2,'admin lookup: SP1 active -> SP2, key normalised');
 // identity drift: same badge, other name; same name other badge; reused photo
 r=g.post({action:'add',token:G,rec:{...rec,date:'2026-10-26',name:'Andi Wijaya',level:'2',violation:'Smoking'},photo:Buffer.from('other').toString('base64')});
 let rr=g.post({action:'list',token:A}).records.find(x=>x.id==r.id);ok(rr.flags.includes('NAME_MISMATCH'),'NAME_MISMATCH flagged');
@@ -46,7 +46,7 @@ ok(g.post({action:'add',token:W,rec:{...rec,date:'2026-10-28',violation:'x'},pho
 ok(g.post({action:'add',token:G,rec:{...rec,date:'2027-01-01',violation:'f'},photo:jpg}).error==='future','future date refused');
 // reject with reason visible to IC
 ok(g.post({action:'review',token:A,id:3,decision:'reject',note:'badge not matching'}).ok,'reject');
-l=g.post({action:'list',token:G});ok(l.records.find(x=>x.id==3).note==='badge not matching'&&l.records.find(x=>x.id==3).status==='Rejected','IC sees rejection reason');
+ok(g.post({action:'list',token:A}).records.find(x=>x.id==3).note==='badge not matching','rejection reason stored for admin');
 // admin edit/delete/import + audit
 ok(g.post({action:'update',token:A,id:2,rec:{name:'Budi Santoso'}}).ok,'admin edit');
 ok(g.post({action:'delete',token:A,id:3}).ok&&!g.post({action:'list',token:A}).records.some(x=>x.id==3),'admin delete is soft and hides it');

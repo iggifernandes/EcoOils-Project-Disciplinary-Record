@@ -178,18 +178,19 @@ function visible_(all, u) {
 
 /* ---------- actions ---------- */
 function list_(b, u) {
+  if (u.role !== 'admin') return { ok: true, records: [], me: u };   // ICs never receive the register
   var l = visible_(recs_(), u).map(function (r) { return pub_(r, u); });
   return { ok: true, records: l, me: u };
 }
 function lookup_(b, u) {
+  // ICs only learn whether a badge belongs to another company. No name, no level, no history.
   var key = badgeKey_(b.empId);
-  if (key.length < 3) return { ok: true, known: false };
-  var all = recs_().filter(function (r) { return r.status !== 'Deleted'; });
+  if (key.length < 3) return { ok: true };
+  var all = recs_().filter(function (r) { return r.status !== 'Deleted' && badgeKey_(r.empId) === key; });
   var date = /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
   var L = ladder_(all, key, date, '');
-  if (u.role !== 'admin' && L.known && L.company && norm_(L.company) !== norm_(u.company))
-    return { ok: true, known: true, other: true };           // never reveal another company's worker
-  return { ok: true, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
+  if (u.role === 'admin') return { ok: true, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
+  return { ok: true, other: !!(L.known && L.company && norm_(L.company) !== norm_(u.company)) };
 }
 function add_(b, u) {
   var d = b.rec || {};
@@ -317,7 +318,7 @@ function import_(b, u) {
 function photo_(b, u) {
   var r = recs_().filter(function (x) { return String(x.id) === String(b.id); })[0];
   if (!r || r.status === 'Deleted' || !r.photoId) return { ok: false, error: 'not_found' };
-  if (u.role !== 'admin' && norm_(r.company) !== norm_(u.company)) return { ok: false, error: 'forbidden' };
+  if (u.role !== 'admin') return { ok: false, error: 'forbidden' };
   var bytes = DriveApp.getFileById(r.photoId).getBlob().getBytes();
   return { ok: true, data: 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes) };
 }

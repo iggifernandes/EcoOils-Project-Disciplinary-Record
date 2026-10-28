@@ -1,13 +1,13 @@
-# EcoOils Project – Disciplinary Record (v2.0.0)
+# EcoOils Project – Disciplinary Record (v2.0.1)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
 ## How it works
 • Person key = EcoOils ID badge number. Every warning needs the photo of the punched ID badge
-• IC admins sign in with a one-time email code (no passwords) and see only their own company
+• IC admins sign in with a one-time email code (no passwords). They get ONLY the Add Warning form: no register, no names, no SP levels, no photos come back to them
 • An IC warning is Pending until an EcoOils admin verifies it against the badge posted in the WhatsApp group; only Verified warnings count for the SP ladder
-• ICs cannot edit, delete or verify. Admin edits, deletions and verifications are logged (Audit sheet)
-• Identity drift flags for the admin: NAME_MISMATCH, SAME_NAME_NEW_BADGE, PHOTO_REUSED, LEVEL_MISMATCH, SP3_ACTIVE. A known badge locks the name on the IC form
+• ICs cannot view, edit, delete or verify. Admin edits, deletions and verifications are logged (Audit sheet)
+• Identity drift flags for the admin: NAME_MISMATCH, SAME_NAME_NEW_BADGE, PHOTO_REUSED, LEVEL_MISMATCH, SP3_ACTIVE.
 • EcoOils does not terminate anyone. SP3 = no access to the project site; zero tolerance (especially LSR) = direct no access. The IC decides on employment
 • Letters, Legal tab, Settings, Users and Audit are admin only
 • EN / ID / MS, Jost, EcoOils standard header

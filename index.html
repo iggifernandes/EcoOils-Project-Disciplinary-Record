@@ -180,7 +180,7 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="2.0.0";
+const VERSION="2.0.1";
 const BUILD_DATE="2026-10-28";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
@@ -325,7 +325,7 @@ function applyLang(){
 }
 function go(tab){tab=gate(tab);UI.tab=tab;document.querySelectorAll("section.tab").forEach(s=>s.classList.toggle("on",s.id==="tab-"+tab));
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));render()}
-function render(){applyLang();({dash:rDash,reg:isIC()?rIcReg:rReg,new:isIC()?rIcNew:rNew,wk:rWk,legal:rLegal,set:rSet,rev:rRev,lg:rLogin})[UI.tab]()}
+function render(){applyLang();({dash:rDash,reg:rReg,new:isIC()?rIcNew:rNew,wk:rWk,legal:rLegal,set:rSet,rev:rRev,lg:rLogin})[UI.tab]()}
 
 /* ---------- dashboard ---------- */
 function stackBar(counts,max){return'<span class="trk">'+["1","2","3","ZT"].map(l=>counts[l]?'<i class="s'+l+'" style="width:'+(counts[l]/max*100)+'%" title="'+lvLabel(l)+': '+counts[l]+'"></i>':"").join("")+"</span>"}
@@ -580,7 +580,7 @@ Object.assign(T.en,{t_rev:"Review",t_out:"Sign out",t_lg:"Sign in",loading:"Load
  lg_h:"Sign in",lg_email:"Email address",lg_send:"Send code",lg_code:"6-digit code from the email",lg_in:"Sign in",lg_back:"Back",lg_sent:"If this email is registered, a code has been sent (valid 10 minutes).",lg_info:"Access is by invitation. Use the email address registered by EcoOils HSSE.",
  e_bad_email:"Enter a valid email address.",e_wait:"Please wait a minute before asking for a new code.",e_limit:"Too many codes today. Try again later.",e_code:"Wrong or expired code.",e_net:"No connection to the server.",e_server:"Server error. Try again.",e_auth:"Session ended. Sign in again.",e_forbidden:"Not allowed.",e_duplicate:"This warning is already recorded (same badge, date and violation).",e_other_company:"This badge ID belongs to another company. Contact EcoOils HSSE.",e_photo:"The photo of the punched ID badge is required.",e_photo_big:"Photo is too large.",e_missing:"Please fill all required fields.",e_future:"The date cannot be in the future.",e_bad_request:"Invalid data.",e_not_found:"Record not found.",e_note:"A reason is required.",e_self:"You cannot remove your own admin access.",
  ic_h:"Add a warning",ic_co:"Company",ic_badge:"EcoOils ID badge number",ic_badge_h:"The number on the punched ID badge, exactly as in the photo.",ic_photo:"Photo of the punched ID badge",ic_photo_h:"Required. The punched hole must be visible. HSSE checks it against the badge posted in the WhatsApp group.",ic_send:"Send to HSSE",ic_sent:"Sent. EcoOils HSSE will verify it.",
- ic_known:"Badge on record under {n}. The name is locked.",ic_new:"New badge ID. HSSE will check the badge photo.",ic_other:"This badge ID is registered under another company. Contact EcoOils HSSE.",ic_none:"No active warning on record → SP1.",ic_next:"Active SP{a} (since {d}, valid until {u}) → SP{n}.",ic_phk:"Active SP3 (valid until {u}). This person must already have no access to the project. Contact EcoOils HSSE.",ic_note:"A warning counts only after EcoOils HSSE has verified it against the badge photo. You cannot edit or delete it afterwards; ask HSSE.",
+ ic_known:"Badge on record under {n}. The name is locked.",ic_new:"New badge ID. HSSE will check the badge photo.",ic_other:"This badge ID is registered under another company. Contact EcoOils HSSE.",ic_none:"No active warning on record → SP1.",ic_next:"Active SP{a} (since {d}, valid until {u}) → SP{n}.",ic_phk:"Active SP3 (valid until {u}). This person must already have no access to the project. Contact EcoOils HSSE.",ic_note:"A warning counts only after EcoOils HSSE has verified it against the badge photo. You cannot view, edit or delete submitted warnings; ask HSSE.",
  st_pending:"Waiting for verification",st_rejected:"Rejected",st_verified:"Verified",th_st:"Status",photo:"Photo",
  rv_h:"Waiting for verification",rv_none:"Nothing is waiting.",rv_ok:"Verify",rv_no:"Reject",rv_ask:"Reason for rejecting (the IC will see it):",rv_by:"Added by",rv_file:"Name on file for this badge",
  fl_NAME_MISMATCH:"Name differs from the name on file for this badge",fl_SAME_NAME_NEW_BADGE:"Same name already exists under another badge ID",fl_PHOTO_REUSED:"This photo was already used on another warning",fl_LEVEL_MISMATCH:"Level differs from the ladder",fl_SP3_ACTIVE:"Person already has an active SP3",
@@ -636,11 +636,11 @@ function signOut(){const tk=TOKEN;TOKEN="";ME=null;S.records=[];A=null;try{local
   if(tk)fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"logout",token:tk})}).catch(()=>{});
   UI.lg=null;setMode();go("lg")}
 function setMode(){
-  const adm=ME&&ME.role==="admin",show=adm?["dash","reg","rev","new","wk","legal","set"]:ME?["reg","new"]:[];
+  const adm=ME&&ME.role==="admin",show=adm?["dash","reg","rev","new","wk","legal","set"]:ME?["new"]:[];
   document.querySelectorAll("#nav button").forEach(b=>{b.style.display=(b.dataset.tab==="out"?!!ME:show.includes(b.dataset.tab))?"":"none"});
   $("#nav").style.display=ME?"flex":"none";
 }
-function gate(tab){if(!ME)return"lg";if(ME.role!=="admin"&&!["reg","new"].includes(tab))return"reg";if(tab==="lg")return ME.role==="admin"?"dash":"reg";return tab}
+function gate(tab){if(!ME)return"lg";if(ME.role!=="admin")return"new";if(tab==="lg")return"dash";return tab}
 const stChip=r=>{const s=r.status||"Verified";return'<span class="st '+(s==="Verified"?"ok":s==="Pending"?"skipped":"zt")+'">'+esc(t("st_"+s.toLowerCase()))+"</span>"+(s==="Rejected"&&r.note?'<div class="muted">'+esc(r.note)+"</div>":"")};
 const flagChips=r=>r.flags?'<div style="margin:4px 0">'+r.flags.split(",").filter(Boolean).map(f=>'<span class="st skipped" style="margin:0 4px 4px 0">'+esc(t("fl_"+f))+"</span>").join("")+"</div>":"";
 function pendBanner(){const n=S.records.filter(r=>r.status==="Pending").length;return n?'<div class="note" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>'+esc(t("dash_pend",{n}))+'</span><button class="btn sm" onclick="go(\'rev\')">'+esc(t("dash_go"))+"</button></div>":""}
@@ -665,24 +665,12 @@ function rLogin(){
     const go2=async()=>{const code=$("#lgc").value.replace(/\D/g,"");if(code.length!==6){msg(t("e_code"));return}
       $("#lgv").disabled=true;msg(t("loading"));const j=await api("verify",{email:L.email,code});
       if(!j.ok){$("#lgv").disabled=false;msg(errMsg(j));return}
-      TOKEN=j.token;ME=j.me;saveSess();const r=await reload();UI.lg=null;setMode();if(!r.ok){msg(errMsg(r));return}go(ME.role==="admin"?"dash":"reg")};
+      TOKEN=j.token;ME=j.me;saveSess();const r=await reload();UI.lg=null;setMode();if(!r.ok){msg(errMsg(r));return}go(ME.role==="admin"?"dash":"new")};
     $("#lgv").onclick=go2;$("#lgc").onkeydown=e=>{if(e.key==="Enter")go2()};$("#lgb").onclick=()=>{L.step=1;rLogin()};
   }
 }
 
 /* ---- IC screens ---- */
-function rIcReg(){
-  const el=$("#tab-reg"),q=norm(UI.f.q);
-  const list=S.records.filter(r=>!q||norm([r.name,r.empId,r.violation,r.position].join(" ")).includes(q)).sort((x,y)=>y.date.localeCompare(x.date)||y.id-x.id);
-  const pages=Math.max(1,Math.ceil(list.length/UI.per));UI.page=Math.min(UI.page,pages);const rows=list.slice((UI.page-1)*UI.per,UI.page*UI.per);
-  el.innerHTML='<div class="card"><h2>'+esc(ME.company)+'</h2><div class="bar-f"><input id="fq" placeholder="'+esc(t("search"))+'" value="'+esc(UI.f.q)+'"></div><div class="muted" style="margin-bottom:6px">'+list.length+" "+esc(t("rows"))+"</div>"
-   +(rows.length?'<div class="tw"><table><tr>'+["th_date","th_name","th_id","th_pos","th_lvl","th_viol","th_st",""].map(k=>"<th>"+(k?esc(t(k)):"")+"</th>").join("")+"</tr>"
-   +rows.map(r=>"<tr><td>"+fmt(r.date)+"</td><td>"+esc(r.name)+"</td><td>"+esc(r.empId)+"</td><td>"+esc(r.position)+"</td><td>"+badge(r.level)+'</td><td class="v">'+esc(r.violation)+"</td><td>"+stChip(r)+"</td><td>"+(r.hasPhoto?'<button class="btn sm sec" data-p="'+r.id+'">'+esc(t("photo"))+"</button>":"")+"</td></tr>").join("")+"</table></div>":emptyHTML())
-   +'<div class="pager"><button class="btn sm sec" id="pp"'+(UI.page<=1?" disabled":"")+">"+esc(t("prev"))+"</button><span>"+esc(t("page"))+" "+UI.page+" "+esc(t("of"))+" "+pages+'</span><button class="btn sm sec" id="pn"'+(UI.page>=pages?" disabled":"")+">"+esc(t("next"))+"</button></div></div>";
-  $("#fq").oninput=e=>{UI.f.q=e.target.value;UI.page=1;const p=e.target.selectionStart;rIcReg();const n=$("#fq");n.focus();n.setSelectionRange(p,p)};
-  $("#pp").onclick=()=>{UI.page--;rIcReg()};$("#pn").onclick=()=>{UI.page++;rIcReg()};
-  el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>viewPhoto(+b.dataset.p));
-}
 function rIcNew(){
   const el=$("#tab-new");UI.photo="";let locked=false,tm;
   el.innerHTML='<div class="card"><h2>'+esc(t("ic_h"))+'</h2><div class="f2">'
@@ -700,15 +688,7 @@ function rIcNew(){
   const look=async()=>{const b=$("#id_b").value.trim(),box=$("#id_lk"),n=$("#id_n"),btn=$("#id_s");
     if(b.replace(/[\s.\-_\/]/g,"").length<3){box.innerHTML="";if(locked){n.value="";n.readOnly=false;locked=false}btn.disabled=false;return}
     const j=await api("lookup",{empId:b,date:$("#id_d").value});if(!j.ok||$("#id_b").value.trim()!==b)return;
-    let cls="r1",msg="";
-    if(j.other){cls="rp";msg=t("ic_other");btn.disabled=true}
-    else{btn.disabled=false;
-      if(j.known){n.value=j.name;n.readOnly=true;locked=true;msg=t("ic_known",{n:j.name})+" ";
-        if(j.phk){cls="rp";msg+=t("ic_phk",{u:fmt(j.until)})}
-        else if(j.maxA){cls="r"+j.next;msg+=t("ic_next",{a:j.maxA,d:fmt(j.since),u:fmt(j.until),n:j.next});$("#id_l").value=String(j.next)}
-        else{msg+=t("ic_none");$("#id_l").value="1"}}
-      else{if(locked){n.value="";n.readOnly=false;locked=false}msg=t("ic_new")}}
-    box.innerHTML='<div class="reco '+cls+'">'+esc(msg)+"</div>"};
+    if(j.other){btn.disabled=true;box.innerHTML='<div class="reco rp">'+esc(t("ic_other"))+"</div>"}else{btn.disabled=false;box.innerHTML=""}};
   $("#id_b").oninput=()=>{clearTimeout(tm);tm=setTimeout(look,500)};$("#id_b").onchange=look;$("#id_d").onchange=look;
   $("#id_s").onclick=async()=>{
     const o={date:$("#id_d").value,name:$("#id_n").value.trim(),empId:$("#id_b").value.trim(),position:$("#id_p").value.trim(),level:$("#id_l").value,violation:$("#id_v").value.trim()};
@@ -716,7 +696,7 @@ function rIcNew(){
     if(!UI.photo){toast(t("e_photo"));return}
     const btn=$("#id_s");btn.disabled=true;const j=await api("add",{rec:o,photo:UI.photo});btn.disabled=false;
     if(!j.ok){toast(errMsg(j));return}
-    toast(t("ic_sent"));UI.photo="";await reload();go("reg")};
+    toast(t("ic_sent")+" #"+j.id);UI.photo="";rIcNew()};
 }
 
 /* ---- admin: review queue ---- */
@@ -792,7 +772,7 @@ document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>b.dataset.tab=
   try{const s=JSON.parse(localStorage.getItem(SESS_KEY)||"null");if(s&&s.token&&s.me){TOKEN=s.token;ME=s.me}}catch(e){}
   setMode();
   if(ME){const j=await reload();if(!j.ok&&j.error!=="net"){ME=null;TOKEN=""}}
-  setMode();go(ME?(ME.role==="admin"?"dash":"reg"):"lg");
+  setMode();go(ME?(ME.role==="admin"?"dash":"new"):"lg");
 })();
 </script>
 <script>/* eco-std-header */(function(){var v=document.getElementById('ver'),d=document.getElementById('verdate');if(!v||!d)return;function n(){var m=(v.textContent||'').match(/\d+(?:\.\d+)+|\d+/);return m?'v'+m[0]:''}function s(){var x=n();if(x&&v.textContent!==x)v.textContent=x;d.textContent=x?x+' \u00b7 '+d.getAttribute('data-date'):''}s();new MutationObserver(s).observe(v,{childList:true,characterData:true,subtree:true})})();</script>

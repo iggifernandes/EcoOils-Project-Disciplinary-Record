@@ -24,19 +24,17 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   ok(await p.isVisible('#lge')&&!(await p.isVisible('#nav')),'signed out: only the login shows');
   await signin(p,'gsb@x.com');
   const tabs=await p.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(tabs)==='["reg","new","out"]','IC sees only reg/new/out: '+tabs);
-  await p.click('#nav [data-tab=new]');
+  ok(JSON.stringify(tabs)==='["new","out"]','IC sees only new/out: '+tabs);
   await p.fill('#id_d','2026-10-01');await p.fill('#id_b','EO 777');await p.fill('#id_n','Candra Wirawan');await p.fill('#id_p','Welder');await p.fill('#id_v','Welding without face shield');
   await p.click('#id_s');ok((await p.textContent('#toast')).length>5,'submit without photo refused: '+await p.textContent('#toast'));
   const tmp='/tmp/badge.jpg';require('fs').writeFileSync(tmp,JPG);
   await p.setInputFiles('#id_f',tmp);await p.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');
-  await p.click('#id_s');await p.waitForSelector('#tab-reg.on table');
-  ok((await p.textContent('#tab-reg')).includes('Candra Wirawan')&&(await p.textContent('#tab-reg')).includes('Waiting for verification'),'IC list shows Pending warning');
-  ok(!(await p.innerText('body')).includes('Letter'),'no letter button for IC');
-  // lookup locks name after verify
+  await p.click('#id_s');await p.waitForFunction(()=>/Sent/.test(document.getElementById('toast').textContent));
+  ok(!(await p.innerText('body')).includes('Candra Wirawan')&&await p.inputValue('#id_b')==='','IC sees nothing back, form reset');
+  ok(!(await p.innerText('body')).includes('Letter')&&!(await p.isVisible('#nav [data-tab=reg]')),'no register, no letter for IC');
   g.post({action:'review',token:A,id:1,decision:'verify'});
-  await p.click('#nav [data-tab=new]');await p.fill('#id_b','eo777');await p.waitForFunction(()=>document.getElementById('id_n').readOnly);
-  ok(await p.inputValue('#id_n')==='Candra Wirawan'&&await p.inputValue('#id_l')==='2','known badge: name locked, level preset SP2');
+  await p.fill('#id_b','eo777');await p.waitForTimeout(900);
+  ok(await p.inputValue('#id_n')===''&&!(await p.innerText('#id_lk')).includes('SP'),'IC lookup shows no name or level');
   await p.screenshot({path:'/tmp/ic390.png'});
   await p.click('#nav [data-tab=out]');await p.waitForSelector('#lge');ok(true,'sign out returns to login');
   // --- Admin flow
@@ -52,7 +50,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   // IC adds another for review
   const p2=await open(await ctxFor());await signin(p2,'gsb@x.com');
   g.post({action:'reqcode',email:'gsb@x.com'});
-  await p2.click('#nav [data-tab=new]');await p2.fill('#id_b','EO 888');await p2.fill('#id_n','Eko Prasetyo');await p2.fill('#id_p','Fitter');await p2.fill('#id_v','No harness');await p2.setInputFiles('#id_f',tmp);await p2.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');await p2.click('#id_s');await p2.waitForSelector('#tab-reg.on table');
+  await p2.fill('#id_b','EO 888');await p2.fill('#id_n','Eko Prasetyo');await p2.fill('#id_p','Fitter');await p2.fill('#id_v','No harness');await p2.setInputFiles('#id_f',tmp);await p2.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');await p2.click('#id_s');await p2.waitForFunction(()=>/Sent/.test(document.getElementById('toast').textContent));
   await q.click('#nav [data-tab=dash]');await q.reload();
   ok(true,'reload keeps session');
   await q.waitForSelector('#nav button:visible');
