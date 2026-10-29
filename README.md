@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.5.1)
+# EcoOils Project – Disciplinary Record (v2.6.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -42,3 +42,8 @@ Information summary, not legal advice. Contractor workers are employed by the co
 ## v2.5.1
 - Settings: **Replace old imported data with an Excel file** (removes only records that came from an Excel import, keeps warnings entered in the app, then imports the chosen file). Use it to load a corrected Excel. Code.gs v2.5 (import `replace`).
 - Post a warning photo: the company list now offers every company (EcoOils first, plus any company already in the records).
+
+## v2.6.0 – violation dropdown
+- The free-text violation box is replaced by a picker (Post a warning photo, IC form, admin form): 33 standard violations in 7 groups, shown in EN / ID / MS and stored in English. Several violations can be added to one warning (stored as `A | B | C`). **Other** needs a reason and a remark (stored as `Other: reason – remark`). Old free-text records are kept as they are.
+- The dashboard category chart counts every violation of a warning; categories: safety glasses, gloves, other PPE, work at height, lifting/vehicles/equipment, permit/hot work/tools, smoking, conduct, supervision/reporting, other. Old texts are matched by keywords (misspellings included): "Other" fell from 87 to 4 on the 368 imported rows.
+- Front end only; Code.gs unchanged (v2.5).

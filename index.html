@@ -141,6 +141,7 @@ header.eh .eh-d{font-size:11px;letter-spacing:.06em;color:#aaaaaa;line-height:1.
 header.eh .eh-l{display:flex;gap:0;margin:0;padding:0;background:none;border:0}
 header.eh .eh-l button{background:none;color:#6e6b6c;border:0;border-bottom:3px solid transparent;border-radius:0;min-width:44px;min-height:44px;padding:0 8px;margin:0;font:400 15px/1 Jost,system-ui,Arial,sans-serif;letter-spacing:.06em;cursor:pointer;box-shadow:none;opacity:1;text-transform:none}
 header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[aria-pressed="true"]{color:#231f20;font-weight:600;border-bottom-color:#44a276;background:none}
+.vchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.vchip{background:#eef6f1;border:1px solid var(--line);border-radius:14px;padding:4px 6px 4px 10px;font-size:13px;line-height:1.3}.vchip.o{background:#fff7d6}.vchip button{border:0;background:none;font-size:16px;cursor:pointer;padding:0 4px;color:var(--grey2)}.vp .vo{margin-top:8px;padding:10px;border:1px solid var(--line);border-radius:8px}.vp select{width:100%}
 .pv{display:none;max-width:100%;max-height:340px;margin-top:8px;border:1px solid var(--line);border-radius:8px}
 #pm{display:none;position:fixed;inset:0;background:rgba(35,31,32,.88);z-index:45;overflow:auto;padding:14px;text-align:center}
 #pm.on{display:block}#pm img{max-width:100%;margin-bottom:10px;border-radius:8px;background:#fff}
@@ -187,7 +188,7 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="2.5.1";
+const VERSION="2.6.0";
 const BUILD_DATE="2026-10-29";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
@@ -322,11 +323,89 @@ function recommend(key,date,excludeId){
   S.records.forEach(r=>{if(r.id===excludeId||!isVer(r)||r.level==="ZT"||wkey(r)!==key)return;if(r.date<date&&date<=lastValid(r.date)&&(+r.level>maxA||(+r.level===maxA&&r.date>best.date))){maxA=+r.level;best=r}});
   return{maxA,best,next:Math.min(3,maxA+1),phk:maxA===3};
 }
-function category(v){v=String(v||"").toLowerCase();
-  if(/glass|kacamata|eye/.test(v))return"glasses";if(/smok|rokok|merokok/.test(v))return"smoking";
-  if(/permit|ptw|izin kerja/.test(v))return"permit";if(/height|harness|ketinggian|scaffold|lifeline/.test(v))return"height";
-  if(/vehicle|truck|driver|flagman|speed|forklift|crane|tmc|rigger|lifting|kendaraan|sling/.test(v))return"vehicle";
-  if(/ppe|apd|helmet|vest|glove|boot|trouser|sepatu|rompi|sarung|torn/.test(v))return"ppe";return"other"}
+/* ---------- standard violation list (stored in English, shown in the user's language) ---------- */
+const VG={ppe:["PPE","APD (alat pelindung diri)","PPE"],height:["Work at height & scaffolding","Kerja di ketinggian & scaffolding","Kerja di tempat tinggi & scaffolding"],vehicle:["Lifting, vehicles & equipment","Pengangkatan, kendaraan & peralatan","Pengangkatan, kenderaan & peralatan"],permit:["Permit, hot work & tools","Izin kerja, pekerjaan panas & alat","Permit kerja, kerja panas & alat"],smoking:["Smoking","Merokok","Merokok"],conduct:["Conduct & discipline","Perilaku & disiplin","Tingkah laku & disiplin"],supervision:["Supervision & reporting","Pengawasan & pelaporan","Penyeliaan & pelaporan"]};
+const VT=[
+["glasses","ppe","Not wearing safety glasses","Tidak memakai kacamata keselamatan","Tidak memakai cermin mata keselamatan"],
+["glasses","ppe","Safety glasses lowered or worn improperly (not covering the eyes)","Kacamata keselamatan diturunkan / dipakai tidak benar (tidak menutup mata)","Cermin mata keselamatan diturunkan / dipakai tidak betul (tidak menutup mata)"],
+["gloves","ppe","Not wearing safety gloves / hand gloves","Tidak memakai sarung tangan keselamatan","Tidak memakai sarung tangan keselamatan"],
+["ppe","ppe","Not wearing helmet / chin strap","Tidak memakai helm / tali dagu","Tidak memakai topi keledar / tali dagu"],
+["ppe","ppe","Not wearing safety vest","Tidak memakai rompi keselamatan","Tidak memakai vest keselamatan"],
+["ppe","ppe","Not wearing safety shoes","Tidak memakai sepatu keselamatan","Tidak memakai kasut keselamatan"],
+["ppe","ppe","Improper work clothing (e.g. torn trousers or jeans)","Pakaian kerja tidak sesuai (mis. celana / jeans robek)","Pakaian kerja tidak sesuai (cth. seluar / jeans koyak)"],
+["ppe","ppe","Not wearing task PPE (face shield, welding cup, apron)","Tidak memakai APD pekerjaan (face shield, welding cup, apron)","Tidak memakai PPE tugasan (face shield, welding cup, apron)"],
+["ppe","ppe","Not using full mandatory PPE","Tidak memakai APD wajib lengkap","Tidak memakai PPE wajib lengkap"],
+["height","height","Not using full body harness / not 100% tied off","Tidak memakai full body harness / tidak 100% tie-off","Tidak memakai full body harness / tidak 100% tie-off"],
+["height","height","Working at height without a proper platform / on incomplete or red-tagged scaffold","Bekerja di ketinggian tanpa platform yang layak / di scaffold belum lengkap atau tag merah","Bekerja di tempat tinggi tanpa platform yang betul / di scaffold tidak lengkap atau tag merah"],
+["height","height","Climbing or entering without a ladder (hopper, excavation, pipe)","Naik atau masuk tanpa tangga (hopper, galian, pipa)","Memanjat atau masuk tanpa tangga (hopper, korekan, paip)"],
+["height","height","No barricade during scaffold erection / dismantling","Tidak memasang barikade saat pemasangan / pembongkaran scaffolding","Tiada penghadang semasa pemasangan / pembongkaran scaffolding"],
+["height","height","Material at height not secured / thrown from height (dropped-object risk)","Material di ketinggian tidak diikat / dilempar dari ketinggian (risiko benda jatuh)","Bahan di tempat tinggi tidak diikat / dibaling dari tempat tinggi (risiko objek jatuh)"],
+["vehicle","vehicle","Driving or operating equipment without a flagman","Mengemudi / mengoperasikan alat tanpa flagman","Memandu / mengendalikan jentera tanpa flagman"],
+["vehicle","vehicle","Lifting violation: in the line of fire, crossing barrier, overload or banned sling","Pelanggaran pengangkatan: di line of fire, melewati barikade, kelebihan beban atau sling terlarang","Pelanggaran pengangkatan: di line of fire, melintasi penghadang, lebihan beban atau sling dilarang"],
+["vehicle","vehicle","Unauthorised or unsafe equipment operation (e.g. rigger operating TMC, crane left running)","Mengoperasikan alat tanpa wewenang / tidak aman (mis. rigger mengoperasikan TMC, crane dibiarkan hidup)","Mengendalikan jentera tanpa kebenaran / tidak selamat (cth. rigger mengendalikan TMC, kren dibiarkan hidup)"],
+["vehicle","vehicle","Using uninspected or defective equipment (stamper, compactor, sling)","Memakai alat belum diinspeksi / rusak (stamper, compactor, sling)","Menggunakan jentera belum diperiksa / rosak (stamper, compactor, sling)"],
+["vehicle","vehicle","Using phone while driving","Memakai telepon saat mengemudi","Menggunakan telefon semasa memandu"],
+["vehicle","vehicle","Not checking vehicles or personnel at the gate (TMC check)","Tidak memeriksa kendaraan / orang di gerbang (pemeriksaan TMC)","Tidak memeriksa kenderaan / orang di pintu pagar (pemeriksaan TMC)"],
+["permit","permit","Working without a permit (PTW) / outside the permit scope","Bekerja tanpa izin kerja (PTW) / di luar lingkup izin","Bekerja tanpa permit kerja (PTW) / di luar skop permit"],
+["permit","permit","Hot work without fire blanket or fire watcher","Pekerjaan panas tanpa fire blanket / fire watcher","Kerja panas tanpa fire blanket / fire watcher"],
+["permit","permit","Unsafe tool use (e.g. grinder without handle)","Penggunaan alat tidak aman (mis. gerinda tanpa handle)","Penggunaan alat tidak selamat (cth. pengisar tanpa pemegang)"],
+["permit","permit","Refuelling with the engine running","Mengisi bahan bakar saat mesin hidup","Mengisi minyak semasa enjin hidup"],
+["smoking","smoking","Smoking in the work area / outside a designated area","Merokok di area kerja / di luar area yang ditentukan","Merokok di kawasan kerja / di luar kawasan ditetapkan"],
+["smoking","smoking","Supervisor saw smoking but did not stop or report it","Pengawas melihat orang merokok tetapi tidak menegur / melaporkan","Penyelia nampak orang merokok tetapi tidak menegur / melapor"],
+["conduct","conduct","Alcohol consumption","Mengonsumsi alkohol","Mengambil alkohol"],
+["conduct","conduct","Fighting / horseplay / joking at work","Berkelahi / bercanda berlebihan saat bekerja","Bergaduh / bergurau berlebihan semasa bekerja"],
+["conduct","conduct","Sleeping, phone use or idling on site / during TBM","Tidur, bermain telepon atau tidak bekerja di lokasi / saat TBM","Tidur, bermain telefon atau tidak bekerja di tapak / semasa TBM"],
+["conduct","conduct","Not following TBM, instructions or reprimand","Tidak mengikuti TBM, instruksi atau teguran","Tidak mengikuti TBM, arahan atau teguran"],
+["supervision","supervision","Supervisor not intervening / lack of area supervision","Pengawas tidak menegur / kurang pengawasan area","Penyelia tidak campur tangan / kurang penyeliaan kawasan"],
+["supervision","supervision","Failure to inform HSSE (incident, theft, lost ID)","Tidak melaporkan ke HSSE (insiden, pencurian, ID hilang)","Tidak memaklumkan HSSE (insiden, kecurian, ID hilang)"],
+["supervision","supervision","Report not submitted on time","Laporan tidak diserahkan tepat waktu","Laporan tidak dihantar tepat pada masa"]
+].map((a,i)=>({k:i,c:a[0],g:a[1],en:a[2],id:a[3],ms:a[4]}));
+const VSEP=" | ",VOTH="Other: ";
+function vLabel(it){return it[S.settings.lang]||it.en}
+function vParse(txt){
+  return String(txt||"").split(VSEP).map(x=>x.trim()).filter(Boolean).map(x=>{
+    const it=VT.find(v=>v.en.toLowerCase()===x.toLowerCase());if(it)return{t:"std",k:it.k};
+    if(x.toLowerCase().startsWith(VOTH.toLowerCase())){const b=x.slice(VOTH.length),i=b.indexOf(" – ");return{t:"oth",reason:i<0?b:b.slice(0,i),remark:i<0?"":b.slice(i+3)}}
+    return{t:"txt",text:x}})}
+function vSer(parts){return parts.map(p=>p.t==="std"?VT[p.k].en:p.t==="oth"?VOTH+p.reason+(p.remark?" – "+p.remark:""):p.text).join(VSEP)}
+function cats(v){
+  const out=new Set();
+  vParse(v).forEach(p=>{
+    if(p.t==="std"){out.add(VT[p.k].c);return}
+    if(p.t==="oth"){out.add("other");return}
+    const x=p.text.toLowerCase(),n=out.size;
+    if(/glas|gasses|kacamata|eye|clear glass|punch one/.test(x))out.add("glasses");
+    if(/glove|sarung tangan|gand glove|handglove|hand glove/.test(x))out.add("gloves");
+    if(/smok|rokok|merokok/.test(x))out.add("smoking");
+    if(/permit|ptw|izin kerja|fire blanket|blangket|fire watcher|grend|grind(er|ing)? without|handle|diesel/.test(x))out.add("permit");
+    if(/harnes|fbh|tie.?of|tie off|scaffol|platform|ladder|ketinggian|at height|w\/h|hopper|barica|drop|diatas|di atas pipa|100% off/.test(x))out.add("height");
+    if(/flagman|truck|vehicle|driv|crane|tmc|rigger|lifting|sling|stamper|compactor|excavator|telehandler|kendaraan|check(ing)? (worker|personnel|people)|not check/.test(x))out.add("vehicle");
+    if(/ppe|apd|helm|hard hat|vest|rompi|boot|shoes|sepatu|trouser|jeans|face shield|welding cup|apron|chin strap/.test(x))out.add("ppe");
+    if(/alkohol|alcohol|berantam|fight|joking|sleep|phone|calls|movie|tbm|rebellious|late |foul|following instruction|instruct|after stopping/.test(x))out.add("conduct");
+    if(/not inform|supervis|intervene|intervening|report|follow.?up|lost id|pay attention/.test(x))out.add("supervision");
+    if(out.size===n)out.add("other")});
+  if(!out.size)out.add("other");return[...out]}
+const category=v=>cats(v)[0];
+function vpMount(host,initial){
+  let parts=vParse(initial);
+  const L=(a)=>t(a);
+  host.classList.add("vp");
+  const opts='<option value="">'+esc(t("vp_choose"))+"</option>"+Object.keys(VG).map(g=>'<optgroup label="'+esc(VG[g][{en:0,id:1,ms:2}[S.settings.lang]])+'">'+VT.filter(v=>v.g===g).map(v=>'<option value="'+v.k+'">'+esc(vLabel(v))+"</option>").join("")+"</optgroup>").join("")+'<option value="o">'+esc(t("vp_other"))+"</option>";
+  host.innerHTML='<div class="vchips"></div><select class="vsel">'+opts+'</select>'
+   +'<div class="vo" style="display:none"><label>'+esc(t("vp_reason"))+' <i>*</i></label><input class="vor" maxlength="80"><label>'+esc(t("vp_remark"))+' <i>*</i></label><textarea class="vom" maxlength="400"></textarea><div class="row" style="margin-top:8px"><button type="button" class="btn sm vod">'+esc(t("vp_add_other"))+'</button><button type="button" class="btn sm sec voc">'+esc(t("cancel"))+"</button></div></div>";
+  const chips=host.querySelector(".vchips"),sel=host.querySelector(".vsel"),vo=host.querySelector(".vo");
+  function draw(){chips.innerHTML=parts.map((p,i)=>'<span class="vchip'+(p.t==="oth"?" o":"")+'">'+esc(p.t==="std"?vLabel(VT[p.k]):p.t==="oth"?t("vp_other")+": "+p.reason+(p.remark?" – "+p.remark:""):p.text)+' <button type="button" data-i="'+i+'" aria-label="'+esc(t("vp_remove"))+'">×</button></span>').join("");
+    chips.querySelectorAll("button").forEach(b=>b.onclick=()=>{parts.splice(+b.dataset.i,1);draw()})}
+  sel.onchange=()=>{const v=sel.value;sel.value="";if(!v)return;if(v==="o"){vo.style.display="block";host.querySelector(".vor").focus();return}
+    if(!parts.some(p=>p.t==="std"&&p.k===+v))parts.push({t:"std",k:+v});draw()};
+  host.querySelector(".voc").onclick=()=>{vo.style.display="none"};
+  host.querySelector(".vod").onclick=()=>{const r=host.querySelector(".vor").value.replace(/\|/g,"/").trim(),m=host.querySelector(".vom").value.replace(/\|/g,"/").trim();
+    if(!r||!m){toast(t("vp_need"));return}parts.push({t:"oth",reason:r,remark:m});host.querySelector(".vor").value="";host.querySelector(".vom").value="";vo.style.display="none";draw()};
+  draw();
+  return{get:()=>vSer(parts),count:()=>parts.length}}
+Object.assign(T.en,{vp_choose:"Choose a violation to add…",vp_other:"Other",vp_reason:"Reason (short title)",vp_remark:"Remark / description",vp_add_other:"Add",vp_remove:"Remove",vp_need:"Other: give a reason and a description.",cat_gloves:"Safety gloves",cat_supervision:"Supervision / reporting",cat_conduct:"Conduct / discipline",cat_permit:"Permit / hot work / tools",cat_ppe:"Other PPE",cat_vehicle:"Lifting / vehicles / equipment"});
+Object.assign(T.id,{vp_choose:"Pilih pelanggaran untuk ditambahkan…",vp_other:"Lainnya",vp_reason:"Alasan (judul singkat)",vp_remark:"Keterangan / uraian",vp_add_other:"Tambah",vp_remove:"Hapus",vp_need:"Lainnya: isi alasan dan uraian.",cat_gloves:"Sarung tangan keselamatan",cat_supervision:"Pengawasan / pelaporan",cat_conduct:"Perilaku / disiplin",cat_permit:"Izin kerja / pekerjaan panas / alat",cat_ppe:"APD lainnya",cat_vehicle:"Pengangkatan / kendaraan / peralatan"});
+Object.assign(T.ms,{vp_choose:"Pilih pelanggaran untuk ditambah…",vp_other:"Lain-lain",vp_reason:"Sebab (tajuk ringkas)",vp_remark:"Catatan / huraian",vp_add_other:"Tambah",vp_remove:"Buang",vp_need:"Lain-lain: berikan sebab dan huraian.",cat_gloves:"Sarung tangan keselamatan",cat_supervision:"Penyeliaan / pelaporan",cat_conduct:"Tingkah laku / disiplin",cat_permit:"Permit kerja / kerja panas / alat",cat_ppe:"PPE lain",cat_vehicle:"Pengangkatan / kenderaan / jentera"});
 const lvLabel=l=>l==="ZT"?"ZT":"SP"+l;
 const badge=l=>'<span class="badge b'+l+'">'+lvLabel(l)+"</span>";
 function chk(r){const i=analyze().info.get(r.id);if(!i)return"";let txt=t("st_"+i.status);
@@ -363,7 +442,7 @@ function rDash(){
   const mmx=Math.max(1,...ms.map(m=>m.n));
   const moH='<div class="months">'+ms.map(m=>'<div title="'+m.k+': '+m.n+'"><span>'+(m.n||"")+'</span><span class="st-col" style="height:'+(m.n/mmx*100)+'%">'+["1","2","3","ZT"].map(l=>m.c[l]?'<i class="s'+l+'" style="height:'+(m.c[l]/m.n*100)+'%;display:block"></i>':"").join("")+"</span><span>"+MONTHS[S.settings.lang][m.m]+"</span></div>").join("")+"</div>"+legend;
   // categories
-  const byCat={};R.forEach(r=>{const c=category(r.violation);byCat[c]=(byCat[c]||0)+1});
+  const byCat={};R.forEach(r=>{cats(r.violation).forEach(c=>{byCat[c]=(byCat[c]||0)+1})});
   const catL=Object.entries(byCat).sort((x,y)=>y[1]-x[1]),cm=catL[0][1];
   const catH=catL.map(([c,n])=>'<div class="bar"><span class="lbl" title="'+esc(t("cat_"+c))+'" style="width:170px">'+esc(t("cat_"+c))+'</span><span class="trk"><i style="background:var(--acc);width:'+(n/cm*100)+'%"></i></span><span class="n">'+n+"</span></div>").join("");
   h+='<div class="grid two"><div class="card"><h2>'+esc(t("c_company"))+"</h2>"+coH+'</div><div class="card"><h2>'+esc(t("c_month"))+"</h2>"+moH+'</div></div><div class="card"><h2>'+esc(t("c_cat"))+"</h2>"+catH+"</div>";
@@ -423,11 +502,12 @@ function rNew(){
    +'<div><label>'+esc(t("f_pos"))+' <i>*</i></label><input id="np" value="'+esc(r.position)+'"></div>'
    +'<div><label>'+esc(t("f_lvl"))+' <i>*</i></label><select id="nl">'+[["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]].map(([v,k])=>'<option value="'+v+'"'+(r.level===v?" selected":"")+">"+esc(t(k))+"</option>").join("")+"</select></div>"
    +'<div class="full"><div id="reco"></div></div>'
-   +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><textarea id="nv">'+esc(r.violation)+"</textarea></div>"
+   +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><div id="nvp"></div></div>'
    +(ed?"":'<div class="full"><label>'+esc(t("ic_photo"))+'</label><input type="file" id="xf" accept="image/*"><img id="xp" class="pv" alt=""></div>')
    +'<div><label>'+esc(t("f_by"))+' <i>*</i></label><input id="nb" value="'+esc(r.givenBy)+'"></div>'
    +'<div><label>'+esc(t("f_ack"))+'</label><select id="na">'+["0","1","2"].map(v=>'<option value="'+v+'"'+((r.ack||"0")===v?" selected":"")+">"+esc(t("ack"+v))+"</option>").join("")+"</select></div></div>"
    +'<div class="row" style="margin-top:14px"><button class="btn" id="sv">'+esc(t("save"))+'</button><button class="btn sec" id="svp">'+esc(t("saveprint"))+'</button><button class="btn sec" id="cx">'+esc(t("cancel"))+"</button></div></div>";
+  const VPN=vpMount($("#nvp"),r.violation);
   const key=()=>wkey({empId:$("#ni").value,name:$("#nn").value});
   function reco(){
     const n=$("#nn").value.trim(),i=$("#ni").value.trim();const box=$("#reco");
@@ -443,7 +523,7 @@ function rNew(){
   $("#nn").onchange=()=>{const w=names.find(x=>x.name===$("#nn").value);if(w&&!$("#ni").value){$("#ni").value=w.empId||"";if(!$("#np").value)$("#np").value=w.position||"";if(!$("#nc").value)$("#nc").value=w.company||""}reco()};
   ["nn","ni","nd","nl"].forEach(i=>{$("#"+i).oninput=reco;$("#"+i).onchange=i==="nn"?$("#nn").onchange:reco});reco();
   function collect(){
-    const o={date:$("#nd").value,company:$("#nc").value,name:$("#nn").value.trim(),empId:$("#ni").value.trim(),position:$("#np").value.trim(),level:$("#nl").value,violation:$("#nv").value.trim(),givenBy:$("#nb").value.trim(),ack:$("#na").value};
+    const o={date:$("#nd").value,company:$("#nc").value,name:$("#nn").value.trim(),empId:$("#ni").value.trim(),position:$("#np").value.trim(),level:$("#nl").value,violation:VPN.get(),givenBy:$("#nb").value.trim(),ack:$("#na").value};
     if(!o.date||!o.company||!o.name||!o.empId||!o.position||!o.violation||!o.givenBy){toast(t("req"));return null}return o}
   async function commit(pr){const o=collect();if(!o)return;
     $("#sv").disabled=$("#svp").disabled=true;
@@ -734,9 +814,10 @@ function rIcNew(){
    +'<div class="full"><div id="id_lk"></div></div>'
    +'<div><label>'+esc(t("f_pos"))+' <i>*</i></label><input id="id_p"></div>'
    +'<div><label>'+esc(t("f_lvl"))+' <i>*</i></label><select id="id_l">'+[["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]].map(([v,k])=>'<option value="'+v+'">'+esc(t(k))+"</option>").join("")+"</select></div>"
-   +'<div class="full"><label>'+esc(t("f_viol"))+(fr?"":' <i>*</i>')+'</label><textarea id="id_v"'+(fr?" readonly":"")+">"+(fr?esc(fr.violation):"")+"</textarea></div>"
+   +'<div class="full"><label>'+esc(t("f_viol"))+(fr?"":' <i>*</i>')+'</label>'+(fr?'<textarea id="id_v" readonly>'+esc(fr.violation)+"</textarea>":'<div id="id_vp2"></div>')+"</div>"
    +(fr?'<div class="full"><button class="btn sm sec" id="id_vp">'+esc(t("photo"))+"</button></div>":'<div class="full"><label>'+esc(t("ic_photo"))+' <i>*</i></label><input type="file" id="id_f" accept="image/*"><div class="muted">'+esc(t("ic_photo_h"))+'</div><img id="id_pv" class="pv" alt=""></div>')+"</div>"
    +'<div class="note">'+esc(t("ic_note"))+'</div><div class="row"><button class="btn" id="id_s">'+esc(t("ic_send"))+"</button>"+(fr?'<button class="btn sec" id="id_x">'+esc(t("cancel"))+"</button>":"")+"</div></div>";
+  const VPI=fr?null:vpMount($("#id_vp2"),"");
   if(fr){$("#id_vp").onclick=()=>viewPhoto(fr.id);$("#id_x").onclick=()=>{UI.fill=null;go("wait")}}else bindPhoto("id_f","id_pv");
   const look=async()=>{const b=$("#id_b").value.trim(),nv=locked?"":$("#id_n").value.trim(),box=$("#id_lk"),n=$("#id_n"),btn=$("#id_s");
     if(b.replace(/[\s.\-_\/]/g,"").length<3&&nv.length<3){box.innerHTML="";if(locked){n.value="";n.readOnly=false;locked=false}btn.disabled=false;return}
@@ -752,7 +833,7 @@ function rIcNew(){
     box.innerHTML='<div class="reco '+cls+'">'+esc(msg)+"</div>"};
   $("#id_n").oninput=()=>{if(!locked){clearTimeout(tm);tm=setTimeout(look,600)}};$("#id_b").oninput=()=>{clearTimeout(tm);tm=setTimeout(look,500)};$("#id_b").onchange=look;$("#id_d").onchange=look;
   $("#id_s").onclick=async()=>{
-    const o={date:$("#id_d").value,name:$("#id_n").value.trim(),empId:$("#id_b").value.trim(),position:$("#id_p").value.trim(),level:$("#id_l").value,violation:$("#id_v").value.trim()};
+    const o={date:$("#id_d").value,name:$("#id_n").value.trim(),empId:$("#id_b").value.trim(),position:$("#id_p").value.trim(),level:$("#id_l").value,violation:fr?$("#id_v").value.trim():VPI.get()};
     if(!o.date||!o.name||!o.empId||!o.position||!o.violation){toast(t("req"));return}
     if(!fr&&!UI.photo){toast(t("e_photo"));return}
     if(PV){toast(t("pv_blocked"));return}
@@ -771,11 +852,11 @@ function rPost(){
   el.innerHTML='<div class="card"><h2>'+esc(t("ps_h"))+'</h2><p class="muted">'+esc(t("ps_p"))+'</p><div class="f2">'
    +'<div><label>'+esc(t("f_co"))+' <i>*</i></label><select id="pc"><option value=""></option>'+[...new Set([...COMPANIES,...S.records.map(x=>x.company).filter(Boolean)])].map(c=>"<option>"+esc(c)+"</option>").join("")+"</select></div>"
    +'<div><label>'+esc(t("f_date"))+' <i>*</i></label><input type="date" id="pd" max="'+todayStr()+'" value="'+todayStr()+'"></div>'
-   +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><textarea id="pv2"></textarea></div>'
+   +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><div id="pvp"></div></div>'
    +'<div class="full"><label>'+esc(t("ic_photo"))+' <i>*</i></label><input type="file" id="pf" accept="image/*"><img id="pp2" class="pv" alt=""></div></div>'
    +'<div class="row" style="margin-top:12px"><button class="btn" id="ps">'+esc(t("ps_send"))+"</button></div></div>";
-  bindPhoto("pf","pp2");
-  $("#ps").onclick=async()=>{const o={company:$("#pc").value,date:$("#pd").value,violation:$("#pv2").value.trim()};
+  const VPP=vpMount($("#pvp"),"");bindPhoto("pf","pp2");
+  $("#ps").onclick=async()=>{const o={company:$("#pc").value,date:$("#pd").value,violation:VPP.get()};
     if(!o.company||!o.date||!o.violation){toast(t("req"));return}if(!UI.photo){toast(t("e_photo"));return}
     const b=$("#ps");b.disabled=true;const j=await api("post",{rec:o,photo:UI.photo});b.disabled=false;
     if(!j.ok){toast(errMsg(j));return}toast(t("ps_done")+" #"+j.id);UI.photo="";await reload();rPost()};
