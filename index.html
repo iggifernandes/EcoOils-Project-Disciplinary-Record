@@ -184,11 +184,11 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="2.1.0";
+const VERSION="2.1.1";
 const BUILD_DATE="2026-10-28";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
-const COMPANIES=["PBS","KKS","WEN","GSB","PTTS","MPE","SOS","Other"];
+const COMPANIES=["EcoOils","PBS","KKS","WEN","GSB","PTTS","MPE","SOS","Other"];
 const MONTHS={ms:["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"],en:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],id:["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]};
 const ROMAN=["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
 
@@ -373,7 +373,7 @@ function filtered(){const a=analyze(),f=UI.f,q=norm(f.q);
     if(q&&!norm([r.name,r.empId,r.violation,r.position,r.company,r.givenBy].join(" ")).includes(q))return false;return true}
   ).sort((x,y)=>y.date.localeCompare(x.date)||y.id-x.id)}
 function rReg(){
-  const el=$("#tab-reg"),cos=[...new Set(S.records.map(r=>r.company).filter(Boolean))].sort(),f=UI.f;
+  const el=$("#tab-reg"),cos=[...new Set(S.records.map(r=>r.company).filter(Boolean))].sort((a,b)=>(b==="EcoOils")-(a==="EcoOils")||a.localeCompare(b)),f=UI.f;
   const lvs=[["","all_lvl"],["1","lv1"],["2","lv2"],["3","lv3"],["ZT","lvZT"]],chks=[["","all_chk"],["flag","only_flag"],["ok","st_ok"],["skipped","st_skipped"],["repeat","st_repeat"],["phk","st_phk"],["zt","st_zt"],["pending","st_pending"],["awaiting","st_awaiting"],["rejected","st_rejected"]];
   const list=filtered(),pages=Math.max(1,Math.ceil(list.length/UI.per));UI.page=Math.min(UI.page,pages);
   const rows=list.slice((UI.page-1)*UI.per,UI.page*UI.per);
