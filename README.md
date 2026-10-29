@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.6.1)
+# EcoOils Project – Disciplinary Record (v2.6.2)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -50,3 +50,6 @@ Information summary, not legal advice. Contractor workers are employed by the co
 
 ## v2.6.1
 - "New Warning" is no longer a tab: it is a button at the top right of the title row (above the line), shown to admin and IC admins, hidden for the HSSE viewer. Front end only; Code.gs unchanged (v2.5).
+
+## v2.6.2
+- Fluid layout: the app now uses the full width of the screen (phone, tablet, laptop, desktop) with side margins that scale with the screen; the worker-history list column scales too. Header date corrected. Front end only; Code.gs unchanged (v2.5).
