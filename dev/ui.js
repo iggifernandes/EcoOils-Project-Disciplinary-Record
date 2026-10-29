@@ -91,7 +91,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   g.post({action:'usersave',token:A,user:{email:'ron@x.com',name:'Ron',company:'EcoOils',role:'viewer'}});
   g.clearWait();const pv=await open(await ctxFor());await signin(pv,'ron@x.com');
   const vt=await pv.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(vt)==='["dash","reg","wk","rev","legal","out"]'||vt.join()==='dash,reg,rev,wk,legal,out','viewer tabs: '+vt);ok(!(await pv.isVisible('#bnew')),'viewer has no New Warning button');
+  ok(vt.join()==='dash,reg,post,rev,wk,legal,out','viewer tabs: '+vt);ok(!(await pv.isVisible('#bnew')),'viewer has no New Warning button');
   await pv.click('#nav [data-tab=reg]');await pv.waitForSelector('#tab-reg table');
   ok((await pv.$$('#tab-reg [data-e],#tab-reg [data-d],#tab-reg [data-l]')).length===0&&(await pv.innerText('#tab-reg')).includes('Dewi Lestari'),'viewer sees the full register without edit/delete/letter');
   // languages

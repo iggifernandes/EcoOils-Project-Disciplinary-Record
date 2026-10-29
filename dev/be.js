@@ -79,7 +79,8 @@ ok(g.post({action:'usersave',token:A,user:{email:'hocine@x.com',name:'Hocine',co
 g.clearWait();const V=login('hocine@x.com').token;ok(V,'viewer logs in');
 const vl=g.post({action:'list',token:V});ok(vl.records.length>3&&vl.records.some(r=>r.company==='WEN')&&vl.records.some(r=>r.company==='GSB')&&'flags' in vl.records[0],'viewer sees all companies incl. flags');
 ok(g.post({action:'photo',token:V,id:1}).ok,'viewer sees photos');
-for(const [a,x] of [['post',{rec:{company:'GSB',date:'2026-10-27',violation:'x'},photo:jpg}],['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',position:'p',level:'1',violation:'v'},photo:jpg}],['review',{id:2,decision:'verify'}],['update',{id:2,rec:{name:'Z'}}],['delete',{id:2}],['import',{records:[]}],['users',{}],['usersave',{user:{email:'a@b.co',role:'admin'}}],['audit',{}],['fill',{id:1,rec:{}}]])
+{const vp=g.post({action:'post',token:V,rec:{company:'GSB',date:'2026-10-28',violation:'Viewer posted'},photo:jpg});ok(vp.ok,'viewer can post a warning photo');ok(g.post({action:'post',token:V,rec:{company:'GSB',date:'2026-10-28',violation:'x'}}).error==='photo','viewer post needs a photo');}
+for(const [a,x] of [['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',position:'p',level:'1',violation:'v'},photo:jpg}],['review',{id:2,decision:'verify'}],['update',{id:2,rec:{name:'Z'}}],['delete',{id:2}],['import',{records:[]}],['users',{}],['usersave',{user:{email:'a@b.co',role:'admin'}}],['audit',{}],['fill',{id:1,rec:{}}]])
   ok(g.post({action:a,token:V,...x}).error==='forbidden',"viewer cannot "+a);
 // --- v2.5 legacy people are linked by name, new entries by badge ID
 {const L=(n,id,co,d,lv,v)=>({date:d,company:co,name:n,empId:id,position:'Welder',level:lv,violation:v||'x'+n+d});

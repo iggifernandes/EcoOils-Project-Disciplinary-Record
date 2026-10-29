@@ -353,7 +353,7 @@ function add_(b, u) {
 }
 /** HSSE (admin) posts the punched-badge photo + violation. The IC then completes the details. */
 function post_(b, u) {
-  if (u.role !== 'admin') return { ok: false, error: 'forbidden' };
+  if (u.role !== 'admin' && u.role !== 'viewer') return { ok: false, error: 'forbidden' };   // HSSE viewers may post a warning photo (nothing else)
   var d = b.rec || {}, date = str_(d.date).slice(0, 10), company = str_(d.company).trim(), viol = str_(d.violation).trim();
   var photo = str_(b.photo).replace(/^data:image\/\w+;base64,/, '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !company || !viol) return { ok: false, error: 'missing' };
