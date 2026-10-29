@@ -1,4 +1,4 @@
-// CODE.GS VERSION 2.7.1 - 2026-10-29 (paste this whole file; the same version is shown by opening the /exec link)
+// CODE.GS VERSION 2.8.0 - 2026-10-29 (paste this whole file; the same version is shown by opening the /exec link)
 /**
  * EcoOils Disciplinary Record - multi-user backend
  *
@@ -88,6 +88,36 @@ function photoFolder_() {
   var f = DriveApp.createFolder('EcoOils Disciplinary Badge Photos (private)');
   p.setProperty('PHOTO_FOLDER', f.getId());
   return f;
+}
+
+/* ---------- uniform capitalisation (same code is in index.html) ---------- */
+var KEEP_CAPS_ = { PPE: 1, PTW: 1, TBM: 1, HSSE: 1, HSE: 1, TMC: 1, FBH: 1, MCC: 1, FFA: 1, ID: 1, KTP: 1, SIM: 1, KMS: 1, KKS: 1, GSB: 1, WEN: 1, PBS: 1, SOS: 1, MPE: 1, PTTS: 1, SPV: 1, QC: 1, QA: 1, QS: 1, EHS: 1, SP1: 1, SP2: 1, SP3: 1, ZT: 1, LSR: 1, MOM: 1, CCTV: 1, WH: 1, II: 1, III: 1, IV: 1 };
+function capWord_(w, keepShort) {
+  if (!w) return w;
+  var up = w.toUpperCase();
+  if (KEEP_CAPS_[up]) return up;
+  if (keepShort && w === up && w.length <= 4 && /[A-Z]/.test(w) && w.length > 1) return w;   // positions: keep short acronyms such as QC, HSE
+  return w.toLowerCase().replace(/(^|[-'’\/.])([a-zà-ɏ])/g, function (m, a, b) { return a + b.toUpperCase(); });
+}
+/** Names / positions / "given by": Title Case, brackets kept, extra spaces removed. */
+function titleCase_(s, keepShort) {
+  s = String(s === null || s === undefined ? '' : s).replace(/\s+/g, ' ').trim();
+  if (!s) return s;
+  return s.split(' ').map(function (w) {
+    var m = w.match(/^([(\[]*)(.*?)([)\],;:]*)$/);
+    return m[1] + capWord_(m[2], keepShort) + m[3];
+  }).join(' ');
+}
+/** Free text: capital letter at the start of every sentence. A text that is ALL CAPITALS is lower-cased first (acronyms kept). */
+function sentenceCase_(s) {
+  s = String(s === null || s === undefined ? '' : s).replace(/[‎‏⁦-⁩]/g, '').replace(/\s+/g, ' ').trim();
+  if (!s) return s;
+  var letters = s.replace(/[^A-Za-z]/g, '');
+  if (letters.length > 3 && letters === letters.toUpperCase()) {
+    s = s.toLowerCase().replace(/\b[a-z0-9]{2,5}\b/g, function (w) { return KEEP_CAPS_[w.toUpperCase()] ? w.toUpperCase() : w; });
+  }
+  s = s.replace(/\bi\b(?=\s|'|$)/g, 'I').replace(/\b(ppe|ptw|tbm|hsse|tmc|fbh|mcc|ffa|ktp)\b/gi, function (w) { return w.toUpperCase(); });
+  return s.replace(/(^|[.!?]\s+|\|\s+|\n)([a-zà-ɏ])/g, function (m, a, b) { return a + b.toUpperCase(); });
 }
 
 /* ---------- ladder (verified records only) ---------- */
@@ -298,8 +328,8 @@ function add_(b, u) {
   if (u.role === 'viewer') return { ok: false, error: 'forbidden' };
   var d = b.rec || {};
   var date = str_(d.date).slice(0, 10), level = str_(d.level);
-  var name = str_(d.name).trim(), empId = str_(d.empId).trim().replace(/\s+/g, ' ');
-  var pos = str_(d.position).trim(), viol = str_(d.violation).trim();
+  var name = titleCase_(d.name), empId = str_(d.empId).trim().replace(/\s+/g, ' ');
+  var pos = titleCase_(d.position, true), viol = sentenceCase_(d.violation);
   var company = u.role === 'admin' ? str_(d.company).trim() : u.company;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || ['1', '2', '3', 'ZT'].indexOf(level) < 0) return { ok: false, error: 'bad_request' };
   if (!name || badgeKey_(empId).length < 3 || !pos || !viol || !company) return { ok: false, error: 'missing' };
@@ -343,7 +373,7 @@ function add_(b, u) {
     }
     var rec = {
       id: id, date: date, company: company, name: name, empId: empId, position: pos, level: level, violation: viol,
-      givenBy: str_(d.givenBy).trim() || u.name, ack: str_(d.ack) || '0',
+      givenBy: titleCase_(d.givenBy) || u.name, ack: str_(d.ack) || '0',
       status: u.role === 'admin' ? 'Verified' : 'Pending', flags: flags.join(','), photoId: photoId, photoHash: hash,
       addedBy: u.email, addedAt: now_(), verifiedBy: u.role === 'admin' ? u.email : '', verifiedAt: u.role === 'admin' ? now_() : '', note: '', source: u.role === 'admin' ? 'admin' : 'ic'
     };
@@ -355,7 +385,7 @@ function add_(b, u) {
 /** HSSE (admin) posts the punched-badge photo + violation. The IC then completes the details. */
 function post_(b, u) {
   if (u.role !== 'admin' && u.role !== 'viewer') return { ok: false, error: 'forbidden' };   // HSSE viewers may post a warning photo (nothing else)
-  var d = b.rec || {}, date = str_(d.date).slice(0, 10), company = str_(d.company).trim(), viol = str_(d.violation).trim();
+  var d = b.rec || {}, date = str_(d.date).slice(0, 10), company = str_(d.company).trim(), viol = sentenceCase_(d.violation);
   var photo = str_(b.photo).replace(/^data:image\/\w+;base64,/, '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !company || !viol) return { ok: false, error: 'missing' };
   if (!photo) return { ok: false, error: 'photo' };
@@ -366,7 +396,7 @@ function post_(b, u) {
     var bytes = Utilities.base64Decode(photo);
     var hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bytes)).slice(0, 24);
     var photoId = photoFolder_().createFile(Utilities.newBlob(bytes, 'image/jpeg', 'DR' + id + '_posted.jpg')).getId();
-    writeRec_({ id: id, date: date, company: company, name: '', empId: '', position: '', level: '', violation: viol, givenBy: str_(d.givenBy).trim() || u.name, ack: '0',
+    writeRec_({ id: id, date: date, company: company, name: '', empId: '', position: '', level: '', violation: viol, givenBy: titleCase_(d.givenBy) || u.name, ack: '0',
       status: 'Awaiting', flags: '', photoId: photoId, photoHash: hash, addedBy: u.email, addedAt: now_(), verifiedBy: '', verifiedAt: '', note: '', source: 'hsse' });
     audit_(u, 'POST', id, company + ' ' + date);
     return { ok: true, id: id };
@@ -375,7 +405,7 @@ function post_(b, u) {
 /** The IC completes a posted item: badge number, name, position, level. The photo stays the one HSSE posted. */
 function fill_(b, u) {
   if (u.role !== 'ic') return { ok: false, error: 'forbidden' };
-  var d = b.rec || {}, name = str_(d.name).trim(), empId = str_(d.empId).trim().replace(/\s+/g, ' '), pos = str_(d.position).trim(), level = str_(d.level);
+  var d = b.rec || {}, name = titleCase_(d.name), empId = str_(d.empId).trim().replace(/\s+/g, ' '), pos = titleCase_(d.position, true), level = str_(d.level);
   if (['1', '2', '3', 'ZT'].indexOf(level) < 0) return { ok: false, error: 'bad_request' };
   if (!name || badgeKey_(empId).length < 3 || !pos) return { ok: false, error: 'missing' };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -446,7 +476,9 @@ function update_(b, u) {
     if (!r || r.status === 'Deleted') return { ok: false, error: 'not_found' };
     var d = b.rec || {}, ch = [];
     ['date', 'company', 'name', 'empId', 'position', 'level', 'violation', 'givenBy', 'ack'].forEach(function (f) {
-      if (d[f] !== undefined && str_(d[f]) !== r[f]) { ch.push(f + ': ' + r[f] + ' -> ' + str_(d[f])); r[f] = str_(d[f]).trim(); }
+      if (d[f] === undefined) return;
+      var nv = f === 'name' || f === 'givenBy' ? titleCase_(d[f]) : f === 'position' ? titleCase_(d[f], true) : f === 'violation' ? sentenceCase_(d[f]) : str_(d[f]).trim();
+      if (nv !== r[f]) { ch.push(f + ': ' + r[f] + ' -> ' + nv); r[f] = nv; }
     });
     if (ch.length) { writeRec_(r, r._row); audit_(u, 'EDIT', r.id, ch.join(' | ')); }
     return { ok: true };
@@ -483,8 +515,8 @@ function import_(b, u) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !str_(d.name).trim() || ['1', '2', '3', 'ZT'].indexOf(str_(d.level)) < 0) return;
       var k = [date, norm_(d.name), norm_(d.empId), norm_(d.violation)].join('|');
       if (have[k]) { dup++; return; } have[k] = 1;
-      var rec = { id: id++, date: date, company: str_(d.company).trim(), name: str_(d.name).trim(), empId: str_(d.empId).trim(), position: str_(d.position).trim(), level: str_(d.level),
-        violation: str_(d.violation).trim(), givenBy: str_(d.givenBy).trim(), ack: str_(d.ack) || '0', status: 'Verified', flags: '', photoId: '', photoHash: '',
+      var rec = { id: id++, date: date, company: str_(d.company).trim(), name: titleCase_(d.name), empId: str_(d.empId).trim(), position: titleCase_(d.position, true), level: str_(d.level),
+        violation: sentenceCase_(d.violation), givenBy: titleCase_(d.givenBy), ack: str_(d.ack) || '0', status: 'Verified', flags: '', photoId: '', photoHash: '',
         addedBy: u.email, addedAt: now_(), verifiedBy: u.email, verifiedAt: now_(), note: 'legacy import', source: 'legacy' };
       rows.push(REC_H.map(function (h) { return str_(rec[h]); })); n++;
     });
@@ -530,7 +562,7 @@ function audit_list_(b, u) {
 
 var ACTIONS_ = { post: post_, fill: fill_, list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
 
-function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.7.1' }); }
+function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.8.0' }); }
 function doPost(e) {
   try {
     if (!e || !e.postData) return out_({ ok: false, error: 'no_body' });

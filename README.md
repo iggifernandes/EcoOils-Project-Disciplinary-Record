@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.7.1)
+# EcoOils Project – Disciplinary Record (v2.8.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -59,9 +59,12 @@ Information summary, not legal advice. Contractor workers are employed by the co
 - 5 wrong PINs lock that email for 15 minutes (the same lock answer for unknown emails; unknown email, no PIN and wrong PIN give the same message). Sessions still last 30 days, so the PIN is only needed on a new device or after sign-out.
 - **First time after this update everybody (including the admin) uses "Forgot PIN, or first time?" once to create a PIN.** Code.gs v2.7 must be redeployed (new action `login`; `verify` now needs `pin`).
 
+## v2.8.0
+- Uniform capitalisation. Names, positions and "given by" become Title Case (extra spaces removed; short acronyms such as QC, HSE, PPE kept); violation text gets a capital at the start of every sentence (all-capitals text is lower-cased first, acronyms kept). Done on the server (add, fill, post, import, edit; Code.gs 2.8.0) and live in the form when you leave the field. Old records are normalised when you run Settings > Replace with the cleaned Excel.
+
 ## v2.7.1
 - Photo fields (punched ID badge / warning photo) now have two buttons: **Take photo with camera** (opens the rear camera directly) and **Choose from gallery**.
 - HSSE viewers (Hocine, Agung, Ron) can also use **Post photo** (Code.gs v2.7: `post` allowed for admin and viewer); everything else stays read-only for them.
 
 ## Code.gs version line
-- Line 1 of Code.gs always states its version (now 2.7.1) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.
+- Line 1 of Code.gs always states its version (now 2.8.0) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.

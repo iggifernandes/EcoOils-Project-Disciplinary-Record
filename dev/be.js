@@ -87,7 +87,7 @@ for(const [a,x] of [['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',positio
  ok(g.post({action:'import',token:A,records:[L('Valentina Siregar','GSB-12-2025','GSB','2026-10-01','1'),L('Wahyu Akbar','GSB-12-2025','GSB','2026-04-06','1'),L('Basri','GSB-12-2025','GSB','2026-07-09','1'),L('Sari Dewi','-','GSB','2026-09-01','1'),L('SARI DEWI (Mandor)','','GSB','2026-09-20','2')]}).added===5,'legacy import');
  const lr=g.post({action:'list',token:A}).records,pk=n=>lr.find(r=>r.name===n).pk;
  ok(pk('Valentina Siregar')!==pk('Basri')&&pk('Basri')!==pk('Wahyu Akbar'),'shared batch ID does not merge different names');
- ok(pk('Sari Dewi')===pk('SARI DEWI (Mandor)'),'same name (case, bracket note) = one person');
+ ok(pk('Sari Dewi')===pk('Sari Dewi (Mandor)'),'same name (case, bracket note) = one person');
  const lk=g.post({action:'lookup',token:A,empId:'EO 9001',name:'Sari Dewi',date:'2026-10-20'});ok(lk.known&&lk.via==='name'&&lk.maxA===2&&lk.next===3,'lookup by name finds legacy ladder: '+JSON.stringify(lk));
  const rn=g.post({action:'add',token:A,rec:{date:'2026-10-20',company:'GSB',name:'Sari Dewi',empId:'EO 9001',position:'Welder',level:'3',violation:'new one'}});ok(rn.ok,'admin adds new entry with real badge');
  const r2=g.post({action:'add',token:A,rec:{date:'2026-10-25',company:'GSB',name:'Sari D',empId:'EO 9001',position:'Welder',level:'3',violation:'again'}});ok(r2.ok,'second new entry');
@@ -110,4 +110,8 @@ for(const [a,x] of [['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',positio
  for(let i=0;i<5;i++)g.post({action:'login',email:'gsb@x.com',pin:'000000'});
  ok(g.post({action:'login',email:'gsb@x.com',pin:'123456'}).error==='locked','5 wrong PINs lock the email');
  ok(!JSON.stringify(g.sheets['Pins']||g.sheets).includes('654321'),'PIN is not stored in clear');}
+// --- v2.8 uniform capitalisation
+{const ar=g.post({action:'add',token:A,rec:{date:'2026-10-21',company:'GSB',name:'  BUDI  santoso ',empId:'EO 5551',position:'qc inspector',level:'1',violation:'NOT WEARING PPE IN THE MCC',givenBy:'pak iggy'}});
+ const lr=g.post({action:'list',token:A}).records.find(r=>r.id==String(ar.id));
+ ok(lr&&lr.name==='Budi Santoso'&&lr.position==='QC Inspector'&&lr.violation==='Not wearing PPE in the MCC'&&lr.givenBy==='Pak Iggy','names, position, violation and given-by are auto-capitalised: '+JSON.stringify([lr.name,lr.position,lr.violation,lr.givenBy]));}
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);

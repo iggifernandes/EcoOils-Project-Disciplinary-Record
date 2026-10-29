@@ -47,7 +47,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   ok(atabs.length===9&&await q.isVisible('#bnew')&&atabs.includes('rev')&&atabs.includes('set'),'admin sees all tabs: '+atabs);
   await q.click('#nav [data-tab=set]');await q.waitForSelector('#usl table');ok((await q.textContent('#usl')).includes('gsb@x.com'),'users list shows IC');
   await q.click('#bnew');
-  await q.fill('#nd','2026-10-10');await q.selectOption('#nc','WEN');await q.fill('#nn','Dewi Lestari');await q.fill('#ni','EO 321');await q.fill('#np','Helper');await q.selectOption('#nvp .vsel','2');await q.fill('#nb','Iggy');
+  await q.fill('#nd','2026-10-10');await q.selectOption('#nc','WEN');await q.fill('#nn','dewi LESTARI  ');await q.fill('#np','qc helper');await q.click('#nb');ok((await q.inputValue('#nn'))==='Dewi Lestari'&&(await q.inputValue('#np'))==='QC Helper','form auto-capitalises name and position on leaving the field');await q.fill('#nn','Dewi Lestari');await q.fill('#ni','EO 321');await q.fill('#np','Helper');await q.selectOption('#nvp .vsel','2');await q.fill('#nb','Iggy');
   await q.click('#sv');await q.waitForSelector('#tab-reg.on table');ok((await q.textContent('#tab-reg')).includes('Dewi Lestari'),'admin adds a verified warning directly');
   // IC adds another for review
   const p2=await open(await ctxFor());await signin(p2,'gsb@x.com');
