@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.4.0)
+# EcoOils Project – Disciplinary Record (v2.5.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -33,3 +33,8 @@ Information summary, not legal advice. Contractor workers are employed by the co
 
 ## v2.4.0
 - IC admins now have a **Worker history** tab: ladder history (SP level, validity, timeline) for the workers of their own company only. No letters, flags or other companies. Also shown in the admin 'IC view'. Front end only, Code.gs unchanged (v2.3).
+
+## v2.5.0 – who is "the same person"
+- Legacy (imported Excel) warnings are linked **by name only** (case, brackets such as "(Mandor)" and one-letter initials ignored; a shorter name inside a longer one counts, e.g. "Wahyu Akbar" = "Wahyu Akbar Panjaitan"). Their old IDs (shared GSB batch codes, typos) are no longer used.
+- New entries are linked **by badge ID**, and join a legacy person when the name matches (same company). The IC form also looks up the ladder by name when the badge is new.
+- The server gives every record a person key (`pk`); Code.gs v2.5 must be redeployed. Same-name legacy people in different companies are still joined by name (owner decision, for now).

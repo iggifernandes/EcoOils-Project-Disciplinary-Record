@@ -97,10 +97,48 @@ function addMonths_(s, m) {
 }
 function addDays_(s, n) { var d = new Date(s + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 function lastValid_(s) { return addDays_(addMonths_(s, MONTHS), -1); }
-function ladder_(all, bkey, date, exceptId) {
+/* Person identity. Legacy (imported Excel) records are linked BY NAME only (their IDs are not reliable: shared batch codes, typos).
+   New records (source not legacy) are linked by badge ID, and join a legacy person when the name matches. */
+function nameToks_(s) { return norm_(str_(s).replace(/\(.*?\)/g, ' ')).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(function (w) { return w.length > 1; }); }
+function nameCompat_(a, b) {
+  var x = nameToks_(a), y = nameToks_(b);
+  if (!x.length || !y.length) return false;
+  if (x.join(' ') === y.join(' ')) return true;
+  var sm = x.length <= y.length ? x : y, lg = sm === x ? y : x;
+  return sm.length >= 2 && sm.every(function (w) { return lg.indexOf(w) >= 0; });
+}
+function isLegacy_(r) { return str_(r.source) === 'legacy'; }
+function pkMap_(all) {
+  var rs = all.filter(function (r) { return r.status !== 'Deleted'; }), par = {};
+  rs.forEach(function (r) { par[r.id] = r.id; });
+  function find(x) { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; }
+  function uni(a, b) { var ra = find(a), rb = find(b); if (ra === rb) return; if (+ra < +rb) par[rb] = ra; else par[ra] = rb; }
+  var byBadge = {}, leg = [], nw = [];
+  rs.forEach(function (r) {
+    if (isLegacy_(r)) { leg.push(r); return; }
+    nw.push(r); var k = badgeKey_(r.empId);
+    if (k.length >= 3) { if (byBadge[k]) uni(byBadge[k].id, r.id); else byBadge[k] = r; }
+  });
+  for (var i = 0; i < leg.length; i++) {
+    for (var j = i + 1; j < leg.length; j++) if (nameCompat_(leg[i].name, leg[j].name)) uni(leg[i].id, leg[j].id);
+    for (var m = 0; m < nw.length; m++) if (r_ok_(nw[m]) && (!leg[i].company || !nw[m].company || norm_(leg[i].company) === norm_(nw[m].company)) && nameCompat_(leg[i].name, nw[m].name)) uni(leg[i].id, nw[m].id);
+  }
+  var map = {};
+  rs.forEach(function (r) { map[r.id] = 'P' + find(r.id); });
+  return map;
+}
+function r_ok_(r) { return !!str_(r.name).trim() && r.status !== 'Awaiting'; }
+/** Which person would a (badge, name) belong to? ID first (new records), then legacy name. Returns {pk, via}. */
+function resolve_(all, map, empId, name, exceptId, company) {
+  var k = badgeKey_(empId), rs = all.filter(function (r) { return r.status !== 'Deleted' && String(r.id) !== String(exceptId); }), i;
+  if (k.length >= 3) for (i = 0; i < rs.length; i++) if (!isLegacy_(rs[i]) && rs[i].status !== 'Awaiting' && badgeKey_(rs[i].empId) === k && map[rs[i].id]) return { pk: map[rs[i].id], via: 'id' };
+  if (str_(name).trim()) for (i = 0; i < rs.length; i++) if (isLegacy_(rs[i]) && (!company || !rs[i].company || norm_(company) === norm_(rs[i].company)) && nameCompat_(rs[i].name, name) && map[rs[i].id]) return { pk: map[rs[i].id], via: 'name' };
+  return { pk: '', via: '' };
+}
+function ladder_(all, map, pk, date, exceptId) {
   var maxA = 0, best = null, name = '', company = '', any = false;
   all.forEach(function (r) {
-    if (badgeKey_(r.empId) !== bkey || r.status === 'Deleted' || r.status === 'Rejected') return;
+    if (!pk || map[r.id] !== pk || r.status === 'Deleted' || r.status === 'Rejected') return;
     any = true;
     if (r.status === 'Verified') { if (!name) name = r.name; if (!company && r.company) company = r.company; }
     if (!name) name = r.name; if (!company && r.company) company = r.company;
@@ -184,10 +222,11 @@ function sess_(token) {
 }
 
 /* ---------- views ---------- */
-function pub_(r, u) {
+function pub_(r, u, map) {
   var o = {};
   REC_H.forEach(function (h) { o[h] = r[h]; });
   o.hasPhoto = r.photoId ? '1' : '';
+  o.pk = map ? (map[r.id] || '') : ''; o.lg = isLegacy_(r) ? '1' : '';
   delete o.photoId; delete o.photoHash;
   if (!canRead_(u)) { delete o.flags; delete o.addedBy; delete o.verifiedBy; delete o.source; }
   return o;
@@ -201,18 +240,18 @@ function visible_(all, u) {
 
 /* ---------- actions ---------- */
 function list_(b, u) {
-  var l = visible_(recs_(), u).map(function (r) { return pub_(r, u); });
+  var all = recs_(), map = pkMap_(all), l = visible_(all, u).map(function (r) { return pub_(r, u, map); });
   return { ok: true, records: l, me: u };
 }
 function lookup_(b, u) {
   // IC: only for badges of its own company. Another company's badge reveals nothing except 'other'.
   var key = badgeKey_(b.empId);
-  if (key.length < 3) return { ok: true };
-  var all = recs_().filter(function (r) { return r.status !== 'Deleted'; });
+  if (key.length < 3 && !str_(b.name).trim()) return { ok: true };
+  var all = recs_().filter(function (r) { return r.status !== 'Deleted'; }), map = pkMap_(all);
   var date = /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
-  var L = ladder_(all, key, date, '');
+  var R = resolve_(all, map, key.length >= 3 ? b.empId : '', b.name, '', canRead_(u) ? '' : u.company), L = ladder_(all, map, R.pk, date, '');
   if (!canRead_(u) && L.known && L.company && norm_(L.company) !== norm_(u.company)) return { ok: true, known: true, other: true };
-  return { ok: true, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
+  return { ok: true, via: R.via, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
 }
 function add_(b, u) {
   if (u.role === 'viewer') return { ok: false, error: 'forbidden' };
@@ -230,20 +269,20 @@ function add_(b, u) {
 
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    var all = recs_(), key = badgeKey_(empId), flags = [];
-    var dup = all.some(function (r) { return r.status !== 'Deleted' && r.status !== 'Rejected' && badgeKey_(r.empId) === key && r.date === date && norm_(r.violation) === norm_(viol); });
+    var all = recs_(), key = badgeKey_(empId), flags = [], map = pkMap_(all), R = resolve_(all, map, empId, name, '', company);
+    var dup = all.some(function (r) { return r.status !== 'Deleted' && r.status !== 'Rejected' && (badgeKey_(r.empId) === key || (R.pk && map[r.id] === R.pk)) && r.date === date && norm_(r.violation) === norm_(viol); });
     if (dup) return { ok: false, error: 'duplicate' };
 
-    var L = ladder_(all, key, date, '');
+    var L = ladder_(all, map, R.pk, date, '');
     if (L.known) {
       if (u.role !== 'admin' && L.company && norm_(L.company) !== norm_(u.company)) return { ok: false, error: 'other_company' };
-      if (norm_(L.name) !== norm_(name)) {
+      if (R.via === 'id' && norm_(L.name) !== norm_(name)) {
         var a = norm_(L.name).split(' '), c = norm_(name).split(' ');
         var sub = a.every(function (w) { return c.indexOf(w) >= 0; }) || c.every(function (w) { return a.indexOf(w) >= 0; });
         if (!sub) flags.push('NAME_MISMATCH');
       }
     } else {
-      var sameName = all.some(function (r) { return r.status !== 'Deleted' && norm_(r.name) === norm_(name) && badgeKey_(r.empId) !== key; });
+      var sameName = all.some(function (r) { return r.status !== 'Deleted' && !isLegacy_(r) && norm_(r.name) === norm_(name) && badgeKey_(r.empId) !== key; });
       if (sameName) flags.push('SAME_NAME_NEW_BADGE');
     }
     if (level !== 'ZT' && L.known && +level !== L.next && !(L.phk && level === '3')) flags.push('LEVEL_MISMATCH');
@@ -303,17 +342,17 @@ function fill_(b, u) {
     var all = recs_(), r = all.filter(function (x) { return String(x.id) === String(b.id); })[0];
     if (!r || r.status !== 'Awaiting') return { ok: false, error: 'not_found' };
     if (norm_(r.company) !== norm_(u.company)) return { ok: false, error: 'forbidden' };
-    var key = badgeKey_(empId), flags = [];
-    var dup = all.some(function (x) { return x.id !== r.id && x.status !== 'Deleted' && x.status !== 'Rejected' && badgeKey_(x.empId) === key && x.date === r.date && norm_(x.violation) === norm_(r.violation); });
+    var key = badgeKey_(empId), flags = [], map = pkMap_(all), R = resolve_(all, map, empId, name, r.id, u.company);
+    var dup = all.some(function (x) { return x.id !== r.id && x.status !== 'Deleted' && x.status !== 'Rejected' && x.status !== 'Awaiting' && (badgeKey_(x.empId) === key || (R.pk && map[x.id] === R.pk)) && x.date === r.date && norm_(x.violation) === norm_(r.violation); });
     if (dup) return { ok: false, error: 'duplicate' };
-    var L = ladder_(all, key, r.date, r.id);
+    var L = ladder_(all, map, R.pk, r.date, r.id);
     if (L.known) {
       if (L.company && norm_(L.company) !== norm_(u.company)) return { ok: false, error: 'other_company' };
-      if (norm_(L.name) !== norm_(name)) {
+      if (R.via === 'id' && norm_(L.name) !== norm_(name)) {
         var a = norm_(L.name).split(' '), c = norm_(name).split(' ');
         if (!(a.every(function (w) { return c.indexOf(w) >= 0; }) || c.every(function (w) { return a.indexOf(w) >= 0; }))) flags.push('NAME_MISMATCH');
       }
-    } else if (all.some(function (x) { return x.status !== 'Deleted' && x.id !== r.id && norm_(x.name) === norm_(name) && badgeKey_(x.empId) !== key; })) flags.push('SAME_NAME_NEW_BADGE');
+    } else if (all.some(function (x) { return x.status !== 'Deleted' && x.id !== r.id && norm_(x.name) === norm_(name) && !isLegacy_(x) && badgeKey_(x.empId) !== key; })) flags.push('SAME_NAME_NEW_BADGE');
     if (level !== 'ZT' && L.known && +level !== L.next && !(L.phk && level === '3')) flags.push('LEVEL_MISMATCH');
     if (level !== 'ZT' && L.phk) flags.push('SP3_ACTIVE');
     r.name = name; r.empId = empId; r.position = pos; r.level = level; r.flags = flags.join(',');

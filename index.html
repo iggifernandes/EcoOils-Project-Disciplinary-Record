@@ -187,8 +187,8 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="2.4.0";
-const BUILD_DATE="2026-10-28";
+const VERSION="2.5.0";
+const BUILD_DATE="2026-10-29";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
 const COMPANIES=["EcoOils","PBS","KKS","WEN","GSB","PTTS","MPE","SOS","Other"];
@@ -282,7 +282,16 @@ function fmt(s){if(!s)return"";const [y,m,d]=s.split("-");return d+" "+MONTHS[S.
 
 /* ---------- analysis (SP ladder) ---------- */
 const norm=s=>String(s||"").toLowerCase().replace(/\s+/g," ").trim();
-function wkey(r){const id=String(r.empId||"").trim();if(id.length>=3&&!/^[-–—.\s]*$/.test(id)&&!/^(n\/?a|none|tidak ada)$/i.test(id))return"I:"+id.toLowerCase().replace(/\s+/g,"");return"N:"+norm(r.name)}
+const bkey=x=>String(x||"").toUpperCase().replace(/[\s.\-_\/]+/g,"");
+function nToks(v){return norm(String(v||"").replace(/\(.*?\)/g," ")).replace(/[^a-z ]/g," ").split(/\s+/).filter(w=>w.length>1)}
+function nCompat(a,b){const x=nToks(a),y=nToks(b);if(!x.length||!y.length)return false;if(x.join(" ")===y.join(" "))return true;const sm=x.length<=y.length?x:y,lg=sm===x?y:x;return sm.length>=2&&sm.every(w=>lg.indexOf(w)>=0)}
+/* Person key: the server gives every record a pk. Legacy (Excel) records are linked by name, new records by badge ID. */
+function wkey(r){
+  if(r.pk)return r.pk;
+  const k=bkey(r.empId);
+  if(k.length>=3){const f=S.records.find(x=>!x.lg&&x.pk&&x.status!=="Awaiting"&&bkey(x.empId)===k);if(f)return f.pk}
+  if(String(r.name||"").trim()){const f=S.records.find(x=>x.lg&&x.pk&&(!r.company||!x.company||norm(x.company)===norm(r.company))&&nCompat(x.name,r.name));if(f)return f.pk}
+  return k.length>=3?"I:"+k:"N:"+norm(r.name)}
 function analyze(){
   if(A)return A;
   const groups=new Map(),info=new Map(),workers=[],today=todayStr();
@@ -729,19 +738,19 @@ function rIcNew(){
    +(fr?'<div class="full"><button class="btn sm sec" id="id_vp">'+esc(t("photo"))+"</button></div>":'<div class="full"><label>'+esc(t("ic_photo"))+' <i>*</i></label><input type="file" id="id_f" accept="image/*"><div class="muted">'+esc(t("ic_photo_h"))+'</div><img id="id_pv" class="pv" alt=""></div>')+"</div>"
    +'<div class="note">'+esc(t("ic_note"))+'</div><div class="row"><button class="btn" id="id_s">'+esc(t("ic_send"))+"</button>"+(fr?'<button class="btn sec" id="id_x">'+esc(t("cancel"))+"</button>":"")+"</div></div>";
   if(fr){$("#id_vp").onclick=()=>viewPhoto(fr.id);$("#id_x").onclick=()=>{UI.fill=null;go("wait")}}else bindPhoto("id_f","id_pv");
-  const look=async()=>{const b=$("#id_b").value.trim(),box=$("#id_lk"),n=$("#id_n"),btn=$("#id_s");
-    if(b.replace(/[\s.\-_\/]/g,"").length<3){box.innerHTML="";if(locked){n.value="";n.readOnly=false;locked=false}btn.disabled=false;return}
-    const j=await api("lookup",{empId:b,date:$("#id_d").value});if(!j.ok||$("#id_b").value.trim()!==b)return;
+  const look=async()=>{const b=$("#id_b").value.trim(),nv=locked?"":$("#id_n").value.trim(),box=$("#id_lk"),n=$("#id_n"),btn=$("#id_s");
+    if(b.replace(/[\s.\-_\/]/g,"").length<3&&nv.length<3){box.innerHTML="";if(locked){n.value="";n.readOnly=false;locked=false}btn.disabled=false;return}
+    const j=await api("lookup",{empId:b,name:nv,date:$("#id_d").value});if(!j.ok||$("#id_b").value.trim()!==b)return;
     let cls="r1",msg="";
     if(j.other){btn.disabled=true;box.innerHTML='<div class="reco rp">'+esc(t("ic_other"))+"</div>";return}
     btn.disabled=false;
-    if(j.known){n.value=j.name;n.readOnly=true;locked=true;msg=t("ic_known",{n:j.name})+" ";
+    if(j.known){if(j.via!=="name"){n.value=j.name;n.readOnly=true;locked=true}msg=t("ic_known",{n:j.name})+" ";
       if(j.phk){cls="rp";msg+=t("ic_phk",{u:fmt(j.until)})}
       else if(j.maxA){cls="r"+j.next;msg+=t("ic_next",{a:j.maxA,d:fmt(j.since),u:fmt(j.until),n:j.next});$("#id_l").value=String(j.next)}
       else{msg+=t("ic_none");$("#id_l").value="1"}}
     else{if(locked){n.value="";n.readOnly=false;locked=false}msg=t("ic_new")}
     box.innerHTML='<div class="reco '+cls+'">'+esc(msg)+"</div>"};
-  $("#id_b").oninput=()=>{clearTimeout(tm);tm=setTimeout(look,500)};$("#id_b").onchange=look;$("#id_d").onchange=look;
+  $("#id_n").oninput=()=>{if(!locked){clearTimeout(tm);tm=setTimeout(look,600)}};$("#id_b").oninput=()=>{clearTimeout(tm);tm=setTimeout(look,500)};$("#id_b").onchange=look;$("#id_d").onchange=look;
   $("#id_s").onclick=async()=>{
     const o={date:$("#id_d").value,name:$("#id_n").value.trim(),empId:$("#id_b").value.trim(),position:$("#id_p").value.trim(),level:$("#id_l").value,violation:$("#id_v").value.trim()};
     if(!o.date||!o.name||!o.empId||!o.position||!o.violation){toast(t("req"));return}

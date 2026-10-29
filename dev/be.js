@@ -81,4 +81,16 @@ const vl=g.post({action:'list',token:V});ok(vl.records.length>3&&vl.records.some
 ok(g.post({action:'photo',token:V,id:1}).ok,'viewer sees photos');
 for(const [a,x] of [['post',{rec:{company:'GSB',date:'2026-10-27',violation:'x'},photo:jpg}],['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',position:'p',level:'1',violation:'v'},photo:jpg}],['review',{id:2,decision:'verify'}],['update',{id:2,rec:{name:'Z'}}],['delete',{id:2}],['import',{records:[]}],['users',{}],['usersave',{user:{email:'a@b.co',role:'admin'}}],['audit',{}],['fill',{id:1,rec:{}}]])
   ok(g.post({action:a,token:V,...x}).error==='forbidden',"viewer cannot "+a);
+// --- v2.5 legacy people are linked by name, new entries by badge ID
+{const L=(n,id,co,d,lv,v)=>({date:d,company:co,name:n,empId:id,position:'Welder',level:lv,violation:v||'x'+n+d});
+ ok(g.post({action:'import',token:A,records:[L('Valentina Siregar','GSB-12-2025','GSB','2026-10-01','1'),L('Wahyu Akbar','GSB-12-2025','GSB','2026-04-06','1'),L('Basri','GSB-12-2025','GSB','2026-07-09','1'),L('Sari Dewi','-','GSB','2026-09-01','1'),L('SARI DEWI (Mandor)','','GSB','2026-09-20','2')]}).added===5,'legacy import');
+ const lr=g.post({action:'list',token:A}).records,pk=n=>lr.find(r=>r.name===n).pk;
+ ok(pk('Valentina Siregar')!==pk('Basri')&&pk('Basri')!==pk('Wahyu Akbar'),'shared batch ID does not merge different names');
+ ok(pk('Sari Dewi')===pk('SARI DEWI (Mandor)'),'same name (case, bracket note) = one person');
+ const lk=g.post({action:'lookup',token:A,empId:'EO 9001',name:'Sari Dewi',date:'2026-10-20'});ok(lk.known&&lk.via==='name'&&lk.maxA===2&&lk.next===3,'lookup by name finds legacy ladder: '+JSON.stringify(lk));
+ const rn=g.post({action:'add',token:A,rec:{date:'2026-10-20',company:'GSB',name:'Sari Dewi',empId:'EO 9001',position:'Welder',level:'3',violation:'new one'}});ok(rn.ok,'admin adds new entry with real badge');
+ const r2=g.post({action:'add',token:A,rec:{date:'2026-10-25',company:'GSB',name:'Sari D',empId:'EO 9001',position:'Welder',level:'3',violation:'again'}});ok(r2.ok,'second new entry');
+ const lr2=g.post({action:'list',token:A}).records,p2=lr2.filter(r=>r.empId==='EO 9001').map(r=>r.pk);ok(p2.length===2&&p2[0]===p2[1]&&p2[0]===lr2.find(r=>r.name==='Sari Dewi').pk,'new entries join the legacy person and each other by badge');
+ const lk2=g.post({action:'lookup',token:A,empId:'EO 9001',date:'2026-10-26'});ok(lk2.via==='id'&&lk2.maxA===3&&lk2.phk,'lookup by badge continues the ladder: '+JSON.stringify(lk2));
+ ok(g.post({action:'lookup',token:W,name:'Sari Dewi',date:'2026-10-26'}).known!==true,'other company name match does not leak');}
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);
