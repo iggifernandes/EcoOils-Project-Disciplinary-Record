@@ -14,10 +14,10 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
     return c}
   const errs=[];
   async function open(c){const p=await c.newPage();p.on('pageerror',e=>{errs.push(e.message);console.log('PAGEERR',e.message)});p.on('console',m=>console.log('console:',m.text()));p.on('console',m=>console.log('console:',m.text()));p.on('dialog',d=>d.accept('badge does not match'));await p.goto('file://'+require('path').resolve(__dirname,'../index.html')+'');return p}
-  async function signin(p,email){g.clearWait();await p.fill('#lge',email);await p.click('#lgs');await p.waitForSelector('#lgc');const code=g.mails.filter(m=>m.to===email).pop().subject.match(/(\d{6})/)[1];await p.fill('#lgc',code);await p.click('#lgv');await p.waitForTimeout(1500);console.log('lgm=',await p.textContent('#lgm').catch(()=>'-'),'| nav:',await p.isVisible('#nav'));await p.waitForSelector('#nav button:visible',{timeout:5000})}
+  async function signin(p,email){g.clearWait();await p.fill('#lge',email);await p.click('#lgf');await p.click('#lgs');await p.waitForSelector('#lgc');await p.waitForTimeout(400);const code=g.mails.filter(m=>m.to===email).pop().subject.match(/(\d{6})/)[1];await p.fill('#lgc',code);await p.fill('#lgn','123456');await p.fill('#lgn2','123456');await p.click('#lgv');await p.waitForTimeout(1500);console.log('lgm=',await p.textContent('#lgm').catch(()=>'-'),'| nav:',await p.isVisible('#nav'));await p.waitForSelector('#nav button:visible',{timeout:5000})}
   // seed users
-  const adm=g.post({action:'verify',email:'x',code:'1'});
-  g.post({action:'reqcode',email:'iggy@example.com'});const A=g.post({action:'verify',email:'iggy@example.com',code:g.mails.pop().subject.match(/(\d{6})/)[1]}).token;
+  const adm=g.post({action:'verify',email:'x',code:'1',pin:'123456'});
+  g.post({action:'reqcode',email:'iggy@example.com'});const A=g.post({action:'verify',email:'iggy@example.com',code:g.mails.pop().subject.match(/(\d{6})/)[1],pin:'123456'}).token;
   g.post({action:'usersave',token:A,user:{email:'gsb@x.com',name:'GSB Admin',company:'GSB',role:'ic'}});
   // --- IC flow
   const c1=await ctxFor(),p=await open(c1);
@@ -38,9 +38,9 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   ok(await p.inputValue('#id_n')==='Candra Wirawan'&&await p.inputValue('#id_l')==='2','known badge: name locked, level preset SP2');
   await p.screenshot({path:'/tmp/ic390.png'});
   await p.evaluate(()=>reload());await p.waitForTimeout(500);await p.click('#nav [data-tab=wk]');{const w=await p.innerText('#tab-wk');ok(w.includes('Candra Wirawan'),'IC worker history lists own worker: '+w.slice(0,300).replace(/\n/g,' '));ok(!w.includes('Dewi Lestari'),'IC worker history hides other companies');await p.click('#tab-wk .card >> text=Candra Wirawan').catch(()=>{});ok(!(await p.innerText('body')).includes('Letter'),'no letter button in IC worker history');}
-  await p.click('#nav [data-tab=out]');await p.waitForSelector('#lge');ok(true,'sign out returns to login');
+  await p.click('#nav [data-tab=out]');await p.waitForSelector('#lge');ok(true,'sign out returns to login');{await p.fill('#lge','gsb@x.com');await p.fill('#lgp','999999');await p.click('#lgi');await p.waitForTimeout(600);ok((await p.innerText('#lgm')).length>5&&!(await p.isVisible('#nav')),'wrong PIN refused: '+await p.innerText('#lgm'));await p.fill('#lgp','123456');await p.click('#lgi');await p.waitForSelector('#nav button:visible',{timeout:5000});ok(true,'sign in with email + PIN (no code)');}
   // --- Admin flow
-  g.post({action:'add',token:g.post({action:'verify',email:'gsb@x.com',code:(g.post({action:'reqcode',email:'gsb@x.com'}),g.mails.pop().subject.match(/(\d{6})/)[1])}).token||'',rec:{},photo:''});
+  g.post({action:'add',token:g.post({action:'verify',email:'gsb@x.com',code:(g.post({action:'reqcode',email:'gsb@x.com'}),g.mails.pop().subject.match(/(\d{6})/)[1]),pin:'123456'}).token||'',rec:{},photo:''});
   const c2=await ctxFor(),q=await open(c2);
   await signin(q,'iggy@example.com');
   const atabs=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));

@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.6.2)
+# EcoOils Project – Disciplinary Record (v2.7.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -53,3 +53,8 @@ Information summary, not legal advice. Contractor workers are employed by the co
 
 ## v2.6.2
 - Fluid layout: the app now uses the full width of the screen (phone, tablet, laptop, desktop) with side margins that scale with the screen; the worker-history list column scales too. Header date corrected. Front end only; Code.gs unchanged (v2.5).
+
+## v2.7.0 – PIN sign-in
+- Sign in with **email + 6-digit PIN**. The emailed code is now only for **"Forgot PIN, or first time?"**: code + a new PIN (typed twice), then signed in. PINs are never typed into the code or the Sheet: stored salted + hashed in the 'Pins' sheet (salt in script property PIN_SALT, created automatically).
+- 5 wrong PINs lock that email for 15 minutes (the same lock answer for unknown emails; unknown email, no PIN and wrong PIN give the same message). Sessions still last 30 days, so the PIN is only needed on a new device or after sign-out.
+- **First time after this update everybody (including the admin) uses "Forgot PIN, or first time?" once to create a PIN.** Code.gs v2.7 must be redeployed (new action `login`; `verify` now needs `pin`).

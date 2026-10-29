@@ -1,7 +1,7 @@
 const g=require('./gas.js')(__dirname+'/../apps-script/Code.gs');
 let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
 const code=em=>{const m=g.mails.filter(x=>x.to===em).pop();return m&&m.subject.match(/(\d{6})/)[1]};
-function login(em){const r=g.post({action:'reqcode',email:em});if(!r.ok)return r;const c=code(em);if(!c)return{ok:false,error:'nomail'};return g.post({action:'verify',email:em,code:c})}
+function login(em){const r=g.post({action:'reqcode',email:em});if(!r.ok)return r;const c=code(em);if(!c)return{ok:false,error:'nomail'};return g.post({action:'verify',email:em,code:c,pin:'123456'})}
 const jpg=Buffer.from('fakejpegbytes1').toString('base64');
 // admin bootstrap
 const adm=login('iggy@example.com');
@@ -15,7 +15,7 @@ ok(login('gsb@x.com').error==='wait','second code within 45 s refused');
 // wrong code
 g.post({action:'reqcode',email:'wen@x.com'});
 // (wait cache blocks) -> skip
-ok(g.post({action:'verify',email:'gsb@x.com',code:'000000'}).error==='code','wrong code refused');
+ok(g.post({action:'verify',email:'gsb@x.com',code:'000000',pin:'123456'}).error==='code','wrong code refused');
 // IC add
 const rec={date:'2026-10-20',name:'Budi Santoso',empId:'EO 1234',position:'Rigger',level:'1',violation:'No helmet'};
 ok(g.post({action:'add',token:G,rec}).error==='photo','photo mandatory for IC');
@@ -97,4 +97,16 @@ for(const [a,x] of [['post',{rec:{company:'GSB',date:'2026-10-27',violation:'x'}
  const rr=g.post({action:'import',token:A,replace:true,records:[{date:'2026-01-05',company:'GSB',name:'Replace Test',empId:'-',position:'x',level:'1',violation:'v'}]});
  const af=g.post({action:'list',token:A}).records;
  ok(rr.ok&&rr.removed===nLeg&&rr.added===1&&af.length===nOther+1&&af.filter(r=>r.lg==='1').length===1,'replace import removes only legacy rows: '+JSON.stringify(rr)+' kept '+nOther);}
+// --- v2.7 PIN login (PIN set only through the emailed code)
+{ok(g.post({action:'login',email:'gsb@x.com',pin:'123456'}).ok,'sign in with email + PIN');
+ const lg=g.post({action:'login',email:'gsb@x.com',pin:'123456'});ok(g.post({action:'list',token:lg.token}).ok,'PIN session works');
+ ok(g.post({action:'login',email:'nobody@x.com',pin:'123456'}).error==='bad_login','unknown email: same answer as wrong PIN');
+ g.clearWait();g.post({action:'reqcode',email:'wen@x.com'});const cw=code('wen@x.com');
+ ok(g.post({action:'verify',email:'wen@x.com',code:cw,pin:'12ab'}).error==='pin_format','PIN must be 6 digits');
+ ok(g.post({action:'verify',email:'wen@x.com',code:cw}).error==='pin_format','PIN required with the code');
+ ok(g.post({action:'verify',email:'wen@x.com',code:cw,pin:'654321'}).ok,'forgot PIN: code + new PIN signs in');
+ ok(g.post({action:'login',email:'wen@x.com',pin:'123456'}).error==='bad_login'&&g.post({action:'login',email:'wen@x.com',pin:'654321'}).ok,'old PIN no longer works, new one does');
+ for(let i=0;i<5;i++)g.post({action:'login',email:'gsb@x.com',pin:'000000'});
+ ok(g.post({action:'login',email:'gsb@x.com',pin:'123456'}).error==='locked','5 wrong PINs lock the email');
+ ok(!JSON.stringify(g.sheets['Pins']||g.sheets).includes('654321'),'PIN is not stored in clear');}
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);

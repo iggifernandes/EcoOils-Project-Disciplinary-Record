@@ -44,7 +44,7 @@ function norm_(s) { return str_(s).toLowerCase().replace(/\s+/g, ' ').trim(); }
 function badgeKey_(s) { return str_(s).toUpperCase().replace(/[\s.\-_\/]+/g, ''); }
 
 function setup() {
-  recSh_(); userSh_(); audSh_(); photoFolder_();
+  recSh_(); userSh_(); audSh_(); pinSh_(); photoFolder_();
   var u = userSh_();
   if (u.getLastRow() < 2) {
     var me = Session.getEffectiveUser().getEmail();
@@ -176,18 +176,30 @@ function reqCode_(b) {
   MailApp.sendEmail({
     to: email,
     subject: 'EcoOils Disciplinary Record - your code ' + code,
-    body: 'Your one-time code: ' + code + '\n\nValid for 10 minutes. Do not share it.\nIf you did not ask for it, ignore this email.\n\nEcoOils Mentari Project - HSSE'
+    body: 'Your one-time code to set your PIN: ' + code + '\n\nValid for 10 minutes. Do not share it.\nIf you did not ask for it, ignore this email.\n\nEcoOils Mentari Project - HSSE'
   });
   return { ok: true };
 }
-function verify_(b) {
-  var email = norm_(b.email), c = CacheService.getScriptCache(), raw = c.get('code:' + email);
-  var u = findUser_(email);
-  if (!u || !raw) return { ok: false, error: 'code' };
-  var st = JSON.parse(raw);
-  if (st.tries >= MAX_TRIES) { c.remove('code:' + email); return { ok: false, error: 'code' }; }
-  if (str_(b.code).trim() !== st.code) { st.tries++; c.put('code:' + email, JSON.stringify(st), CODE_TTL); return { ok: false, error: 'code' }; }
-  c.remove('code:' + email);
+/* ---------- PIN (6 digits, set only through the emailed code = "forgot PIN" flow; stored salted + hashed in sheet 'Pins') ---------- */
+var PIN_MAX_FAILS = 5, PIN_LOCK_S = 900;
+function pinSh_() { return sh_('Pins', ['email', 'hash', 'updated']); }
+function pinSalt_() {
+  var p = PropertiesService.getScriptProperties(), s = p.getProperty('PIN_SALT');
+  if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); p.setProperty('PIN_SALT', s); }
+  return s;
+}
+function pinHash_(email, pin) { return hash_(pinSalt_() + '|' + norm_(email) + '|' + pin); }
+function pinRow_(email) {
+  var v = pinSh_().getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) if (norm_(v[i][0]) === norm_(email)) return { row: i + 1, hash: str_(v[i][1]) };
+  return null;
+}
+function setPin_(email, pin) {
+  var r = pinRow_(email), sh = pinSh_(), h = pinHash_(email, pin);
+  if (r) sh.getRange(r.row, 2, 1, 2).setValues([[h, now_()]]); else sh.appendRow([norm_(email), h, now_()]);
+}
+function startSess_(u, how) {
+  var c = CacheService.getScriptCache();
   var token = Utilities.getUuid() + Utilities.getUuid();
   var sess = { email: u.email, name: u.name, company: u.company, role: role_(u.role) };
   c.put('sess:' + token, JSON.stringify(sess), SESS_TTL);
@@ -195,8 +207,36 @@ function verify_(b) {
   var ss = sesSh_(), now = new Date().getTime(), v = ss.getDataRange().getValues();
   for (var i = v.length; i >= 2; i--) { if (+v[i - 1][2] < now) ss.deleteRow(i); }
   ss.appendRow([hash_(token), u.email, String(now + SESS_DAYS * 86400000), String(now)]);
-  audit_(sess, 'LOGIN', '', '');
+  audit_(sess, 'LOGIN', '', how || '');
   return { ok: true, token: token, me: sess };
+}
+/** Sign in with email + PIN. Same answer for unknown email, no PIN yet and wrong PIN. 5 wrong tries lock the email for 15 min. */
+function login_(b) {
+  var email = norm_(b.email), pin = str_(b.pin).trim(), c = CacheService.getScriptCache();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'bad_email' };
+  var fails = +(c.get('pinfail:' + email) || 0);
+  if (fails >= PIN_MAX_FAILS) return { ok: false, error: 'locked' };
+  var u = findUser_(email), pr = u ? pinRow_(email) : null;
+  if (!u || !pr || !/^\d{6}$/.test(pin) || pr.hash !== pinHash_(email, pin)) {
+    c.put('pinfail:' + email, String(fails + 1), PIN_LOCK_S);
+    return { ok: false, error: 'bad_login' };
+  }
+  c.remove('pinfail:' + email);
+  return startSess_(u, 'pin');
+}
+/** "Forgot PIN" / first time: the emailed code plus a NEW 6-digit PIN. */
+function verify_(b) {
+  var email = norm_(b.email), c = CacheService.getScriptCache(), raw = c.get('code:' + email), pin = str_(b.pin).trim();
+  var u = findUser_(email);
+  if (!u || !raw) return { ok: false, error: 'code' };
+  if (!/^\d{6}$/.test(pin)) return { ok: false, error: 'pin_format' };
+  var st = JSON.parse(raw);
+  if (st.tries >= MAX_TRIES) { c.remove('code:' + email); return { ok: false, error: 'code' }; }
+  if (str_(b.code).trim() !== st.code) { st.tries++; c.put('code:' + email, JSON.stringify(st), CODE_TTL); return { ok: false, error: 'code' }; }
+  c.remove('code:' + email); c.remove('pinfail:' + email);
+  setPin_(email, pin);
+  audit_({ email: u.email, role: role_(u.role) }, 'PIN_SET', '', 'via email code');
+  return startSess_(u, 'code+newpin');
 }
 function sess_(token) {
   if (!token) return null;
@@ -496,6 +536,7 @@ function doPost(e) {
     var b = JSON.parse(e.postData.contents);
     if (b.action === 'reqcode') return out_(reqCode_(b));
     if (b.action === 'verify') return out_(verify_(b));
+    if (b.action === 'login') return out_(login_(b));
     var u = sess_(b.token);
     if (!u) return out_({ ok: false, error: 'auth' });
     if (b.action === 'logout') {
