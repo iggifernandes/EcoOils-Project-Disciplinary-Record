@@ -10,6 +10,7 @@
  *     (Execute as: Me | Who has access: Anyone). The /exec URL stays the same.
  *  4. Add the IC admins in the app: Settings > Users (email + company + role).
  *
+ * v2.1: HSSE posts the badge photo (status Awaiting); the IC completes the details (Pending); HSSE verifies. Run setupReminder() once for the daily 08:00 IC reminder.
  * Rules enforced HERE (not in the browser):
  *  - login = one-time 6-digit code sent by email, session 6 h
  *  - IC sees and adds only its own company; cannot edit, delete or verify
@@ -178,19 +179,18 @@ function visible_(all, u) {
 
 /* ---------- actions ---------- */
 function list_(b, u) {
-  if (u.role !== 'admin') return { ok: true, records: [], me: u };   // ICs never receive the register
   var l = visible_(recs_(), u).map(function (r) { return pub_(r, u); });
   return { ok: true, records: l, me: u };
 }
 function lookup_(b, u) {
-  // ICs only learn whether a badge belongs to another company. No name, no level, no history.
+  // IC: only for badges of its own company. Another company's badge reveals nothing except 'other'.
   var key = badgeKey_(b.empId);
   if (key.length < 3) return { ok: true };
-  var all = recs_().filter(function (r) { return r.status !== 'Deleted' && badgeKey_(r.empId) === key; });
+  var all = recs_().filter(function (r) { return r.status !== 'Deleted'; });
   var date = /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
   var L = ladder_(all, key, date, '');
-  if (u.role === 'admin') return { ok: true, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
-  return { ok: true, other: !!(L.known && L.company && norm_(L.company) !== norm_(u.company)) };
+  if (u.role !== 'admin' && L.known && L.company && norm_(L.company) !== norm_(u.company)) return { ok: true, known: true, other: true };
+  return { ok: true, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
 }
 function add_(b, u) {
   var d = b.rec || {};
@@ -249,12 +249,84 @@ function add_(b, u) {
     return { ok: true, id: id, status: rec.status };
   } finally { lock.releaseLock(); }
 }
+/** HSSE (admin) posts the punched-badge photo + violation. The IC then completes the details. */
+function post_(b, u) {
+  if (u.role !== 'admin') return { ok: false, error: 'forbidden' };
+  var d = b.rec || {}, date = str_(d.date).slice(0, 10), company = str_(d.company).trim(), viol = str_(d.violation).trim();
+  var photo = str_(b.photo).replace(/^data:image\/\w+;base64,/, '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !company || !viol) return { ok: false, error: 'missing' };
+  if (!photo) return { ok: false, error: 'photo' };
+  if (photo.length > 4000000) return { ok: false, error: 'photo_big' };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var all = recs_(), id = 1; all.forEach(function (r) { if (+r.id >= id) id = +r.id + 1; });
+    var bytes = Utilities.base64Decode(photo);
+    var hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bytes)).slice(0, 24);
+    var photoId = photoFolder_().createFile(Utilities.newBlob(bytes, 'image/jpeg', 'DR' + id + '_posted.jpg')).getId();
+    writeRec_({ id: id, date: date, company: company, name: '', empId: '', position: '', level: '', violation: viol, givenBy: str_(d.givenBy).trim() || u.name, ack: '0',
+      status: 'Awaiting', flags: '', photoId: photoId, photoHash: hash, addedBy: u.email, addedAt: now_(), verifiedBy: '', verifiedAt: '', note: '', source: 'hsse' });
+    audit_(u, 'POST', id, company + ' ' + date);
+    return { ok: true, id: id };
+  } finally { lock.releaseLock(); }
+}
+/** The IC completes a posted item: badge number, name, position, level. The photo stays the one HSSE posted. */
+function fill_(b, u) {
+  if (u.role === 'admin') return { ok: false, error: 'forbidden' };
+  var d = b.rec || {}, name = str_(d.name).trim(), empId = str_(d.empId).trim().replace(/\s+/g, ' '), pos = str_(d.position).trim(), level = str_(d.level);
+  if (['1', '2', '3', 'ZT'].indexOf(level) < 0) return { ok: false, error: 'bad_request' };
+  if (!name || badgeKey_(empId).length < 3 || !pos) return { ok: false, error: 'missing' };
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var all = recs_(), r = all.filter(function (x) { return String(x.id) === String(b.id); })[0];
+    if (!r || r.status !== 'Awaiting') return { ok: false, error: 'not_found' };
+    if (norm_(r.company) !== norm_(u.company)) return { ok: false, error: 'forbidden' };
+    var key = badgeKey_(empId), flags = [];
+    var dup = all.some(function (x) { return x.id !== r.id && x.status !== 'Deleted' && x.status !== 'Rejected' && badgeKey_(x.empId) === key && x.date === r.date && norm_(x.violation) === norm_(r.violation); });
+    if (dup) return { ok: false, error: 'duplicate' };
+    var L = ladder_(all, key, r.date, r.id);
+    if (L.known) {
+      if (L.company && norm_(L.company) !== norm_(u.company)) return { ok: false, error: 'other_company' };
+      if (norm_(L.name) !== norm_(name)) {
+        var a = norm_(L.name).split(' '), c = norm_(name).split(' ');
+        if (!(a.every(function (w) { return c.indexOf(w) >= 0; }) || c.every(function (w) { return a.indexOf(w) >= 0; }))) flags.push('NAME_MISMATCH');
+      }
+    } else if (all.some(function (x) { return x.status !== 'Deleted' && x.id !== r.id && norm_(x.name) === norm_(name) && badgeKey_(x.empId) !== key; })) flags.push('SAME_NAME_NEW_BADGE');
+    if (level !== 'ZT' && L.known && +level !== L.next && !(L.phk && level === '3')) flags.push('LEVEL_MISMATCH');
+    if (level !== 'ZT' && L.phk) flags.push('SP3_ACTIVE');
+    r.name = name; r.empId = empId; r.position = pos; r.level = level; r.flags = flags.join(',');
+    r.status = 'Pending'; r.addedBy = u.email + (r.addedBy ? ' (posted by ' + r.addedBy + ')' : ''); r.addedAt = now_();
+    writeRec_(r, r._row);
+    audit_(u, 'FILL', r.id, key + ' ' + level + ' ' + flags.join(','));
+    return { ok: true, id: r.id };
+  } finally { lock.releaseLock(); }
+}
+/** Daily email to every active IC admin that has posted items waiting. Counts only, no names. Run setupReminder() once. */
+function remindICs() {
+  var aw = recs_().filter(function (r) { return r.status === 'Awaiting'; }), today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'), sent = 0;
+  users_().forEach(function (u) {
+    if (norm_(u.role) !== 'ic' || norm_(u.active) === 'no') return;
+    var mine = aw.filter(function (r) { return norm_(r.company) === norm_(u.company); });
+    if (!mine.length) return;
+    var oldest = mine.map(function (r) { return r.date; }).sort()[0];
+    var days = Math.round((new Date(today) - new Date(oldest)) / 86400000);
+    MailApp.sendEmail({ to: u.email, subject: 'EcoOils Disciplinary Record - ' + mine.length + ' warning(s) waiting for your details',
+      body: mine.length + ' safety warning(s) for ' + u.company + ' are waiting for you to enter the badge number, name, position and level.\nOldest: ' + oldest + ' (' + days + ' days).\n\nOpen the app and sign in with your email code.\n\nEcoOils Mentari Project - HSSE' });
+    sent++;
+  });
+  return sent;
+}
+function setupReminder() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'remindICs') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('remindICs').timeBased().everyDays(1).atHour(8).inTimezone(TZ).create();
+  Logger.log('Daily reminder set for about 08:00 Jakarta.');
+}
 function review_(b, u) {
   if (u.role !== 'admin') return { ok: false, error: 'forbidden' };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var r = recs_().filter(function (x) { return String(x.id) === String(b.id); })[0];
     if (!r || r.status === 'Deleted') return { ok: false, error: 'not_found' };
+    if (r.status === 'Awaiting') return { ok: false, error: 'not_ready' };
     var dec = b.decision === 'reject' ? 'Rejected' : 'Verified';
     if (dec === 'Rejected' && !str_(b.note).trim()) return { ok: false, error: 'note' };
     r.status = dec; r.verifiedBy = u.email; r.verifiedAt = now_(); r.note = str_(b.note).trim();
@@ -318,7 +390,7 @@ function import_(b, u) {
 function photo_(b, u) {
   var r = recs_().filter(function (x) { return String(x.id) === String(b.id); })[0];
   if (!r || r.status === 'Deleted' || !r.photoId) return { ok: false, error: 'not_found' };
-  if (u.role !== 'admin') return { ok: false, error: 'forbidden' };
+  if (u.role !== 'admin' && norm_(r.company) !== norm_(u.company)) return { ok: false, error: 'forbidden' };
   var bytes = DriveApp.getFileById(r.photoId).getBlob().getBytes();
   return { ok: true, data: 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes) };
 }
@@ -347,7 +419,7 @@ function audit_list_(b, u) {
   return { ok: true, rows: v.map(function (r) { return r.map(function (x) { return x instanceof Date ? Utilities.formatDate(x, TZ, "yyyy-MM-dd HH:mm") : str_(x); }); }) };
 }
 
-var ACTIONS_ = { list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
+var ACTIONS_ = { post: post_, fill: fill_, list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
 
 function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.0' }); }
 function doPost(e) {

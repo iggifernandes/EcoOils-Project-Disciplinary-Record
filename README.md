@@ -1,12 +1,14 @@
-# EcoOils Project – Disciplinary Record (v2.0.1)
+# EcoOils Project – Disciplinary Record (v2.1.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
 ## How it works
+• HSSE posts the punched-badge photo + violation in the app (Post photo). The IC admin of that company sees it under "Waiting for you", enters badge number / name / position / level, then HSSE verifies. Open items show per company with age on the Review tab; a daily 08:00 email reminds each IC (counts only)
+• Each IC sees only its own company's warnings (status, photo, active SP level), never other companies
 • Person key = EcoOils ID badge number. Every warning needs the photo of the punched ID badge
-• IC admins sign in with a one-time email code (no passwords). They get ONLY the Add Warning form: no register, no names, no SP levels, no photos come back to them
+• IC admins sign in with a one-time email code (no passwords). They see only their own company
 • An IC warning is Pending until an EcoOils admin verifies it against the badge posted in the WhatsApp group; only Verified warnings count for the SP ladder
-• ICs cannot view, edit, delete or verify. Admin edits, deletions and verifications are logged (Audit sheet)
+• ICs cannot edit, delete or verify. Admin edits, deletions and verifications are logged (Audit sheet)
 • Identity drift flags for the admin: NAME_MISMATCH, SAME_NAME_NEW_BADGE, PHOTO_REUSED, LEVEL_MISMATCH, SP3_ACTIVE.
 • EcoOils does not terminate anyone. SP3 = no access to the project site; zero tolerance (especially LSR) = direct no access. The IC decides on employment
 • Letters, Legal tab, Settings, Users and Audit are admin only
@@ -17,7 +19,8 @@ Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracki
 2. Run `setup` once (accept Sheets, Drive, Mail permissions). It registers your Google account as the first admin
 3. Deploy > Manage deployments > pencil > New version > Deploy (the /exec URL stays the same)
 4. Open the app, sign in with your email, Settings > Users: add the IC admins (email + company)
-5. Old v1 data: Settings > Import Excel (goes to the server as verified legacy), or the yellow button "Upload records saved in this browser". `migrateLegacy` copies the old `Warnings` sheet
+5. Run `setupReminder` once (daily 08:00 Jakarta email to ICs with waiting items)
+6. Old v1 data: Settings > Import Excel (goes to the server as verified legacy), or the yellow button "Upload records saved in this browser". `migrateLegacy` copies the old `Warnings` sheet
 
 ## Privacy
 No data in this repo. Records live in your Google Sheet, badge photos in a private Drive folder and are served only to signed-in users of the same company (admin: all). The shared KEY of v1 is no longer used.

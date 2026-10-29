@@ -27,7 +27,7 @@ module.exports=function(codePath){
       computeDigest:(alg,b)=>Array.from(crypto.createHash('sha256').update(Buffer.from(b)).digest()),DigestAlgorithm:{SHA_256:1},
       newBlob:(b,t,n)=>({bytes:b,t,n}),getUuid:()=>crypto.randomUUID()}
   };
-  vm.createContext(ctx);vm.runInContext(fs.readFileSync(codePath,'utf8')+'\n;this.__doPost=doPost;this.__setup=setup;this.__migrate=migrateLegacy;',ctx);
+  vm.createContext(ctx);vm.runInContext(fs.readFileSync(codePath,'utf8')+'\n;this.__doPost=doPost;this.__setup=setup;this.__migrate=migrateLegacy;this.__remind=remindICs;',ctx);
   ctx.__setup();
   return{clearWait:()=>Object.keys(cache).filter(k=>k.startsWith('wait:')).forEach(k=>delete cache[k]),mails,sheets,post:body=>JSON.parse(ctx.__doPost({postData:{contents:JSON.stringify(body)}}).s),ctx,files};
 };
