@@ -43,7 +43,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   const c2=await ctxFor(),q=await open(c2);
   await signin(q,'iggy@example.com');
   const atabs=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(atabs.length===9&&atabs.includes('rev')&&atabs.includes('set'),'admin sees all tabs: '+atabs);
+  ok(atabs.length===10&&atabs.includes('rev')&&atabs.includes('set'),'admin sees all tabs: '+atabs);
   await q.click('#nav [data-tab=set]');await q.waitForSelector('#usl table');ok((await q.textContent('#usl')).includes('gsb@x.com'),'users list shows IC');
   await q.click('#nav [data-tab=new]');
   await q.fill('#nd','2026-10-10');await q.selectOption('#nc','WEN');await q.fill('#nn','Dewi Lestari');await q.fill('#ni','EO 321');await q.fill('#np','Helper');await q.fill('#nv','No gloves');await q.fill('#nb','Iggy');
@@ -75,6 +75,17 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   await p3.waitForFunction(()=>document.getElementById('tab-wait').classList.contains('on')&&!document.querySelector('#tab-wait [data-f]'));ok(true,'item leaves the waiting list after filling');
   await q.click('#nav [data-tab=dash]');await q.reload();await q.waitForSelector('#nav button:visible');await q.click('#nav [data-tab=rev]');
   ok((await q.innerText('#tab-rev')).includes('Gunawan'),'admin Review now shows it as Pending to verify');
+  // --- v2.2: admin 'IC view' preview
+  await q.click('#nav [data-tab=icv]');await q.selectOption('#icc','GSB');await q.click('#icg');await q.waitForSelector('#tab-wait.on');
+  const pt=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
+  ok(JSON.stringify(pt)==='["wait","reg","new","out"]','IC view shows exactly the IC tabs: '+pt);
+  ok((await q.innerText('#pvb')).includes('Preview only'),'preview banner shown');
+  ok(!(await q.innerText('#tab-wait')).includes('WEN'),'IC view lists only that company');
+  await q.click('#nav [data-tab=new]');await q.fill('#id_b','EO 9090');await q.fill('#id_n','Test');await q.fill('#id_p','x');await q.fill('#id_v','y');await q.setInputFiles('#id_f',tmp);await q.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');
+  const before=g.post({action:'list',token:A}).records.length;await q.click('#id_s');await q.waitForTimeout(500);
+  ok(g.post({action:'list',token:A}).records.length===before&&/Preview only/.test(await q.textContent('#toast')),'sending is blocked in the preview');
+  await q.click('#nav [data-tab=out]');await q.waitForSelector('#tab-icv.on');
+  ok((await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).length))===10,'exit returns to the admin menu');
   // languages
   for(const l of['id','ms']){await q.click('.lang [data-lang='+l+']');await q.click('#nav [data-tab=rev]');}
   ok(errs.length===0,'no page errors '+errs.join('|'));

@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.1.1)
+# EcoOils Project – Disciplinary Record (v2.2.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -11,6 +11,7 @@ Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracki
 • ICs cannot edit, delete or verify. Admin edits, deletions and verifications are logged (Audit sheet)
 • Identity drift flags for the admin: NAME_MISMATCH, SAME_NAME_NEW_BADGE, PHOTO_REUSED, LEVEL_MISMATCH, SP3_ACTIVE.
 • EcoOils does not terminate anyone. SP3 = no access to the project site; zero tolerance (especially LSR) = direct no access. The IC decides on employment
+• Admin-only "IC view": pick a company and see exactly what its IC admin sees (preview, nothing is sent)
 • Letters, Legal tab, Settings, Users and Audit are admin only
 • EN / ID / MS, Jost, EcoOils standard header
 
