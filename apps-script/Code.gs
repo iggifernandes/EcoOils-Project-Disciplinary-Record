@@ -428,6 +428,12 @@ function import_(b, u) {
   var inc = b.records || [];
   var lock = LockService.getScriptLock(); lock.waitLock(30000);
   try {
+    var removed = 0;
+    if (b.replace === true) {
+      var shr = recSh_();
+      recs_().filter(isLegacy_).sort(function (a, c) { return c._row - a._row; }).forEach(function (r) { shr.deleteRow(r._row); removed++; });
+      audit_(u, 'PURGE_LEGACY', '', removed + ' legacy records removed before re-import');
+    }
     var all = recs_(), have = {}, id = 1, n = 0, dup = 0;
     all.forEach(function (r) { if (+r.id >= id) id = +r.id + 1; if (r.status !== 'Deleted') have[[r.date, norm_(r.name), norm_(r.empId), norm_(r.violation)].join('|')] = 1; });
     var rows = [];
@@ -446,7 +452,7 @@ function import_(b, u) {
       sh.getRange(r0, 1, rows.length, REC_H.length).setNumberFormat('@').setValues(rows);
     }
     audit_(u, 'IMPORT', '', n + ' added, ' + dup + ' duplicates');
-    return { ok: true, added: n, duplicates: dup };
+    return { ok: true, added: n, duplicates: dup, removed: removed };
   } finally { lock.releaseLock(); }
 }
 function photo_(b, u) {

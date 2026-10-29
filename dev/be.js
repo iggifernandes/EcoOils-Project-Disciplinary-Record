@@ -93,4 +93,8 @@ for(const [a,x] of [['post',{rec:{company:'GSB',date:'2026-10-27',violation:'x'}
  const lr2=g.post({action:'list',token:A}).records,p2=lr2.filter(r=>r.empId==='EO 9001').map(r=>r.pk);ok(p2.length===2&&p2[0]===p2[1]&&p2[0]===lr2.find(r=>r.name==='Sari Dewi').pk,'new entries join the legacy person and each other by badge');
  const lk2=g.post({action:'lookup',token:A,empId:'EO 9001',date:'2026-10-26'});ok(lk2.via==='id'&&lk2.maxA===3&&lk2.phk,'lookup by badge continues the ladder: '+JSON.stringify(lk2));
  ok(g.post({action:'lookup',token:W,name:'Sari Dewi',date:'2026-10-26'}).known!==true,'other company name match does not leak');}
+{const before=g.post({action:'list',token:A}).records,nLeg=before.filter(r=>r.lg==='1').length,nOther=before.length-nLeg;
+ const rr=g.post({action:'import',token:A,replace:true,records:[{date:'2026-01-05',company:'GSB',name:'Replace Test',empId:'-',position:'x',level:'1',violation:'v'}]});
+ const af=g.post({action:'list',token:A}).records;
+ ok(rr.ok&&rr.removed===nLeg&&rr.added===1&&af.length===nOther+1&&af.filter(r=>r.lg==='1').length===1,'replace import removes only legacy rows: '+JSON.stringify(rr)+' kept '+nOther);}
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);

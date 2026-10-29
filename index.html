@@ -187,7 +187,7 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="2.5.0";
+const VERSION="2.5.1";
 const BUILD_DATE="2026-10-29";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
@@ -644,11 +644,11 @@ Object.assign(T.ms,{t_rev:"Semak",t_out:"Log keluar",t_lg:"Log masuk",loading:"M
  rec_phk:"SP3 aktif (dikeluarkan {d}, sah hingga {u}) → orang ini tiada akses ke tapak projek. EcoOils tidak menamatkan pekerjaan; keputusan di tangan IC.",
  rec_zt:"Toleransi sifar (terutamanya LSR): terus tiada akses ke tapak projek. IC memutuskan mengenai pekerjaan."});
 
-Object.assign(T.en,{us_view:"HSSE viewer (sees everything, read-only)",t_icv:"IC view",icv_h:"View as IC admin",icv_p:"See exactly what an IC admin of one company sees. Preview only: nothing is sent or changed.",icv_open:"Open",pv_bar:"Viewing as IC admin of {c}. Preview only, nothing is sent.",pv_exit:"Exit IC view",pv_blocked:"Preview only. Nothing is sent.",t_wait:"Waiting for you",t_post:"Post photo",st_awaiting:"Waiting for IC details",wt_h:"Posted by EcoOils HSSE, waiting for your details",wt_p:"Open each item, check the photo of the punched badge, then enter the badge number, name, position and level.",wt_none:"Nothing is waiting for you.",wt_enter:"Enter details",wt_age:"{n} day(s) waiting",
+Object.assign(T.en,{s_replace:"Replace old imported data with an Excel file",s_replace_h:"Removes every record that came from an earlier Excel import (not warnings entered in the app) and imports the file you choose. Use it to load a corrected Excel.",s_replace_c:"Delete ALL earlier imported records and import a new Excel file? Warnings entered in the app are kept.",s_replaced:"{n} old imported records replaced",us_view:"HSSE viewer (sees everything, read-only)",t_icv:"IC view",icv_h:"View as IC admin",icv_p:"See exactly what an IC admin of one company sees. Preview only: nothing is sent or changed.",icv_open:"Open",pv_bar:"Viewing as IC admin of {c}. Preview only, nothing is sent.",pv_exit:"Exit IC view",pv_blocked:"Preview only. Nothing is sent.",t_wait:"Waiting for you",t_post:"Post photo",st_awaiting:"Waiting for IC details",wt_h:"Posted by EcoOils HSSE, waiting for your details",wt_p:"Open each item, check the photo of the punched badge, then enter the badge number, name, position and level.",wt_none:"Nothing is waiting for you.",wt_enter:"Enter details",wt_age:"{n} day(s) waiting",
  ps_h:"Post a warning photo",ps_p:"Post the punched-badge photo and the violation. The IC admin of that company then enters the badge number and details.",ps_send:"Post to the IC",ps_done:"Posted",aw_h:"Waiting for IC details",aw_n:"Items",aw_old:"Oldest (days)",aw_banner:"{n} posted warning(s) still waiting for the IC to enter details"});
-Object.assign(T.id,{us_view:"Penampil HSSE (melihat semua, hanya baca)",t_icv:"Tampilan IC",icv_h:"Lihat sebagai admin IC",icv_p:"Lihat persis apa yang dilihat admin IC suatu perusahaan. Hanya pratinjau: tidak ada yang dikirim atau diubah.",icv_open:"Buka",pv_bar:"Melihat sebagai admin IC {c}. Hanya pratinjau, tidak ada yang dikirim.",pv_exit:"Keluar tampilan IC",pv_blocked:"Hanya pratinjau. Tidak ada yang dikirim.",t_wait:"Menunggu Anda",t_post:"Kirim foto",st_awaiting:"Menunggu data dari IC",wt_h:"Dikirim HSSE EcoOils, menunggu data Anda",wt_p:"Buka tiap item, periksa foto badge yang dilubangi, lalu isi nomor badge, nama, jabatan, dan tingkat.",wt_none:"Tidak ada yang menunggu Anda.",wt_enter:"Isi data",wt_age:"menunggu {n} hari",
+Object.assign(T.id,{s_replace:"Ganti data impor lama dengan file Excel",s_replace_h:"Menghapus semua catatan dari impor Excel sebelumnya (bukan peringatan yang diinput di aplikasi) lalu mengimpor file yang dipilih. Gunakan untuk memuat Excel yang sudah dikoreksi.",s_replace_c:"Hapus SEMUA catatan impor lama dan impor file Excel baru? Peringatan yang diinput di aplikasi tetap disimpan.",s_replaced:"{n} catatan impor lama diganti",us_view:"Penampil HSSE (melihat semua, hanya baca)",t_icv:"Tampilan IC",icv_h:"Lihat sebagai admin IC",icv_p:"Lihat persis apa yang dilihat admin IC suatu perusahaan. Hanya pratinjau: tidak ada yang dikirim atau diubah.",icv_open:"Buka",pv_bar:"Melihat sebagai admin IC {c}. Hanya pratinjau, tidak ada yang dikirim.",pv_exit:"Keluar tampilan IC",pv_blocked:"Hanya pratinjau. Tidak ada yang dikirim.",t_wait:"Menunggu Anda",t_post:"Kirim foto",st_awaiting:"Menunggu data dari IC",wt_h:"Dikirim HSSE EcoOils, menunggu data Anda",wt_p:"Buka tiap item, periksa foto badge yang dilubangi, lalu isi nomor badge, nama, jabatan, dan tingkat.",wt_none:"Tidak ada yang menunggu Anda.",wt_enter:"Isi data",wt_age:"menunggu {n} hari",
  ps_h:"Kirim foto peringatan",ps_p:"Kirim foto badge yang dilubangi dan pelanggarannya. Admin IC perusahaan itu kemudian mengisi nomor badge dan datanya.",ps_send:"Kirim ke IC",ps_done:"Terkirim",aw_h:"Menunggu data dari IC",aw_n:"Item",aw_old:"Terlama (hari)",aw_banner:"{n} peringatan yang dikirim masih menunggu data dari IC"});
-Object.assign(T.ms,{us_view:"Pemapar HSSE (lihat semua, baca sahaja)",t_icv:"Paparan IC",icv_h:"Lihat sebagai admin IC",icv_p:"Lihat betul-betul apa yang dilihat admin IC sesebuah syarikat. Pratonton sahaja: tiada apa dihantar atau diubah.",icv_open:"Buka",pv_bar:"Melihat sebagai admin IC {c}. Pratonton sahaja, tiada apa dihantar.",pv_exit:"Keluar paparan IC",pv_blocked:"Pratonton sahaja. Tiada apa dihantar.",t_wait:"Menunggu anda",t_post:"Hantar foto",st_awaiting:"Menunggu butiran IC",wt_h:"Dihantar HSSE EcoOils, menunggu butiran anda",wt_p:"Buka setiap item, semak foto lencana yang dilubangi, kemudian isi nombor lencana, nama, jawatan dan tahap.",wt_none:"Tiada yang menunggu anda.",wt_enter:"Isi butiran",wt_age:"menunggu {n} hari",
+Object.assign(T.ms,{s_replace:"Ganti data import lama dengan fail Excel",s_replace_h:"Memadam semua rekod daripada import Excel terdahulu (bukan amaran yang dimasukkan dalam aplikasi) dan mengimport fail yang dipilih. Gunakan untuk memuatkan Excel yang telah dibetulkan.",s_replace_c:"Padam SEMUA rekod import lama dan import fail Excel baharu? Amaran yang dimasukkan dalam aplikasi dikekalkan.",s_replaced:"{n} rekod import lama diganti",us_view:"Pemapar HSSE (lihat semua, baca sahaja)",t_icv:"Paparan IC",icv_h:"Lihat sebagai admin IC",icv_p:"Lihat betul-betul apa yang dilihat admin IC sesebuah syarikat. Pratonton sahaja: tiada apa dihantar atau diubah.",icv_open:"Buka",pv_bar:"Melihat sebagai admin IC {c}. Pratonton sahaja, tiada apa dihantar.",pv_exit:"Keluar paparan IC",pv_blocked:"Pratonton sahaja. Tiada apa dihantar.",t_wait:"Menunggu anda",t_post:"Hantar foto",st_awaiting:"Menunggu butiran IC",wt_h:"Dihantar HSSE EcoOils, menunggu butiran anda",wt_p:"Buka setiap item, semak foto lencana yang dilubangi, kemudian isi nombor lencana, nama, jawatan dan tahap.",wt_none:"Tiada yang menunggu anda.",wt_enter:"Isi butiran",wt_age:"menunggu {n} hari",
  ps_h:"Hantar foto amaran",ps_p:"Hantar foto lencana yang dilubangi dan pelanggarannya. Admin IC syarikat itu kemudian mengisi nombor lencana dan butiran.",ps_send:"Hantar ke IC",ps_done:"Dihantar",aw_h:"Menunggu butiran IC",aw_n:"Item",aw_old:"Terlama (hari)",aw_banner:"{n} amaran yang dihantar masih menunggu butiran IC"});
 async function api(action,data){
   let j;
@@ -769,7 +769,7 @@ function rIcv(){
 function rPost(){
   const el=$("#tab-post");UI.photo="";
   el.innerHTML='<div class="card"><h2>'+esc(t("ps_h"))+'</h2><p class="muted">'+esc(t("ps_p"))+'</p><div class="f2">'
-   +'<div><label>'+esc(t("f_co"))+' <i>*</i></label><select id="pc"><option value=""></option>'+COMPANIES.filter(c=>["GSB","WEN","KKS","PBS"].includes(c)).map(c=>"<option>"+esc(c)+"</option>").join("")+"</select></div>"
+   +'<div><label>'+esc(t("f_co"))+' <i>*</i></label><select id="pc"><option value=""></option>'+[...new Set([...COMPANIES,...S.records.map(x=>x.company).filter(Boolean)])].map(c=>"<option>"+esc(c)+"</option>").join("")+"</select></div>"
    +'<div><label>'+esc(t("f_date"))+' <i>*</i></label><input type="date" id="pd" max="'+todayStr()+'" value="'+todayStr()+'"></div>'
    +'<div class="full"><label>'+esc(t("f_viol"))+' <i>*</i></label><textarea id="pv2"></textarea></div>'
    +'<div class="full"><label>'+esc(t("ic_photo"))+' <i>*</i></label><input type="file" id="pf" accept="image/*"><img id="pp2" class="pv" alt=""></div></div>'
@@ -810,13 +810,13 @@ function rRev(){
 function rSet(){
   const s=S.settings,el=$("#tab-set");
   el.innerHTML='<div class="card"><h2>'+esc(t("s_h1"))+'</h2><div class="f2"><div><label>'+esc(t("s_months"))+'</label><input type="number" min="1" max="12" id="sm" value="'+s.months+'"><div class="muted">'+esc(t("s_months_h"))+'</div></div><div><label>'+esc(t("s_issuer"))+'</label><input id="si" value="'+esc(s.issuer)+'"></div><div><label>'+esc(t("s_emp"))+'</label><input id="se" value="'+esc(s.employer)+'"></div></div></div>'
-   +'<div class="card"><h2>'+esc(t("s_h2"))+'</h2><div class="row"><button class="btn" id="bi">'+esc(t("s_imp"))+'</button><button class="btn sec" id="bx">'+esc(t("s_exp"))+'</button><button class="btn sec" id="bb">'+esc(t("s_bak"))+'</button></div><p class="muted">'+esc(t("s_imp_h"))+"</p></div>"
+   +'<div class="card"><h2>'+esc(t("s_h2"))+'</h2><div class="row"><button class="btn" id="bi">'+esc(t("s_imp"))+'</button><button class="btn sec" id="bx">'+esc(t("s_exp"))+'</button><button class="btn sec" id="bb">'+esc(t("s_bak"))+'</button></div><div class="row" style="margin-top:10px"><button class="btn y" id="bir">'+esc(t("s_replace"))+'</button></div><p class="muted">'+esc(t("s_replace_h"))+'</p><p class="muted">'+esc(t("s_imp_h"))+"</p></div>"
    +(LEGACY.length?'<div class="card"><h2>'+esc(t("lg_h2"))+'</h2><button class="btn y" id="blg">'+esc(t("lg_up",{n:LEGACY.length}))+"</button></div>":"")
    +'<div class="card"><h2>'+esc(t("us_h"))+'</h2><div class="tw" id="usl"></div><div class="f2" style="margin-top:12px"><div><label>'+esc(t("us_email"))+'</label><input id="ue" type="email"></div><div><label>'+esc(t("us_name"))+'</label><input id="un"></div><div><label>'+esc(t("us_co"))+'</label><input id="uc" list="dl-c"><datalist id="dl-c">'+COMPANIES.map(c=>"<option>"+esc(c)+"</option>").join("")+'</datalist></div><div><label>'+esc(t("us_role"))+'</label><select id="ur"><option value="ic">'+esc(t("us_ic"))+'</option><option value="viewer">'+esc(t("us_view"))+'</option><option value="admin">'+esc(t("us_admin"))+'</option></select></div><div><label>'+esc(t("us_act"))+'</label><select id="ua"><option value="yes">'+esc(t("us_yes"))+'</option><option value="no">'+esc(t("us_no"))+'</option></select></div></div><div class="row" style="margin-top:10px"><button class="btn" id="us">'+esc(t("us_save"))+"</button></div></div>"
    +'<div class="card"><h2>'+esc(t("au_h"))+'</h2><button class="btn sec" id="bau">'+esc(t("au_show"))+'</button><div class="tw" id="aul" style="margin-top:10px"></div></div>';
   const sv=()=>{s.months=Math.min(12,Math.max(1,+$("#sm").value||6));s.issuer=$("#si").value;s.employer=$("#se").value;save()};
   ["sm","si","se"].forEach(i=>$("#"+i).onchange=sv);
-  $("#bi").onclick=()=>$("#fileX").click();$("#bx").onclick=exportXlsx;$("#bb").onclick=()=>download(new Blob([JSON.stringify({records:S.records,settings:S.settings},null,1)],{type:"application/json"}),"disciplinary-backup-"+todayStr()+".json");
+  $("#bi").onclick=()=>{UI.replace=false;$("#fileX").click()};$("#bir").onclick=()=>{if(!confirm(t("s_replace_c")))return;UI.replace=true;$("#fileX").click()};$("#bx").onclick=exportXlsx;$("#bb").onclick=()=>download(new Blob([JSON.stringify({records:S.records,settings:S.settings},null,1)],{type:"application/json"}),"disciplinary-backup-"+todayStr()+".json");
   const blg=$("#blg");if(blg)blg.onclick=async()=>{blg.disabled=true;const recs=LEGACY.map(cleanRec).filter(Boolean);const j=await api("import",{records:recs});blg.disabled=false;if(!j.ok){toast(errMsg(j));return}
     try{localStorage.removeItem(LS_KEY)}catch(e){}LEGACY=[];await reload();toast(t("lg_done",{a:j.added,d:j.duplicates}));rSet()};
   const loadUsers=async()=>{const j=await api("users");if(!j.ok){$("#usl").textContent=errMsg(j);return}
@@ -839,18 +839,18 @@ function rolesHtml(L){
 /* ---- import (admin) goes to the server ---- */
 async function pushNew(before){
   const nw=S.records.filter(r=>!before.has(r.id));
-  if(!nw.length){await reload();return{added:0,duplicates:0,ok:true}}
-  const j=await api("import",{records:nw});await reload();return j}
+  if(!nw.length&&!UI.replace){await reload();return{added:0,duplicates:0,ok:true}}
+  const j=await api("import",{records:nw,replace:!!UI.replace});await reload();return j}
 $("#fileX").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{
-    const before=new Set(S.records.map(r=>r.id));let localDup=0;
+    if(UI.replace)S.records=S.records.filter(r=>!r.lg);const before=new Set(S.records.map(r=>r.id));let localDup=0;
     if(/\.json$/i.test(f.name)){const j=JSON.parse(await f.text());const recs=(j.records||[]).map(cleanRec).filter(Boolean);const had=new Set(S.records.map(r=>[r.date,norm(r.name),norm(r.empId),norm(r.violation)].join("|")));let id=Math.max(0,...S.records.map(r=>r.id))+1;recs.forEach(r=>{const k=[r.date,norm(r.name),norm(r.empId),norm(r.violation)].join("|");if(had.has(k)){localDup++;return}r.id=id++;S.records.push(r)})}
     else{if(!window.XLSX){toast(t("no_lib"));return}
       const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});localDup=importRows(rows,false).d}
     toast(t("loading"));const j=await pushNew(before);
     if(!j.ok){toast(errMsg(j));return}
-    toast(t("imp_done",{n:j.added,d:j.duplicates+localDup}));render();
+    const wasR=UI.replace;UI.replace=false;toast(t("imp_done",{n:j.added,d:j.duplicates+localDup})+(wasR?" ("+t("s_replaced",{n:j.removed||0})+")":""));render();
   }catch(err){console.error(err);await reload();toast(t("imp_err"))}
 };
 
