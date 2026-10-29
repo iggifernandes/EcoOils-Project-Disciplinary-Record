@@ -1,5 +1,6 @@
+// CODE.GS VERSION 2.7.1 - 2026-10-29 (paste this whole file; the same version is shown by opening the /exec link)
 /**
- * EcoOils Disciplinary Record - multi-user backend (v2.0)
+ * EcoOils Disciplinary Record - multi-user backend
  *
  * Setup (once):
  *  1. Paste this file in Extensions > Apps Script (replace the old code), Save.
@@ -529,7 +530,7 @@ function audit_list_(b, u) {
 
 var ACTIONS_ = { post: post_, fill: fill_, list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
 
-function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.0' }); }
+function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.7.1' }); }
 function doPost(e) {
   try {
     if (!e || !e.postData) return out_({ ok: false, error: 'no_body' });

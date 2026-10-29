@@ -62,3 +62,6 @@ Information summary, not legal advice. Contractor workers are employed by the co
 ## v2.7.1
 - Photo fields (punched ID badge / warning photo) now have two buttons: **Take photo with camera** (opens the rear camera directly) and **Choose from gallery**.
 - HSSE viewers (Hocine, Agung, Ron) can also use **Post photo** (Code.gs v2.7: `post` allowed for admin and viewer); everything else stays read-only for them.
+
+## Code.gs version line
+- Line 1 of Code.gs always states its version (now 2.7.1) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.
