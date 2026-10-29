@@ -24,15 +24,15 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   ok(await p.isVisible('#lge')&&!(await p.isVisible('#nav')),'signed out: only the login shows');
   await signin(p,'gsb@x.com');
   const tabs=await p.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(tabs)==='["wait","reg","new","wk","out"]','IC tabs wait/reg/wk/new/out: '+tabs);
-  await p.click('#nav [data-tab=new]');await p.fill('#id_d','2026-10-01');await p.fill('#id_b','EO 777');await p.fill('#id_n','Candra Wirawan');await p.fill('#id_p','Welder');await p.selectOption('#id_vp2 .vsel','7');await p.selectOption('#id_vp2 .vsel','o');await p.fill('#id_vp2 .vor','Hot surface');await p.fill('#id_vp2 .vom','Touched pipe without sleeves');await p.click('#id_vp2 .vod');ok((await p.innerText('#id_vp2')).includes('Hot surface')&&(await p.$$('#id_vp2 .vchip')).length===2,'IC picks a standard violation + Other with reason and remark');
+  ok(JSON.stringify(tabs)==='["wait","reg","wk","out"]','IC tabs wait/reg/wk/out: '+tabs);
+  await p.click('#bnew');await p.fill('#id_d','2026-10-01');await p.fill('#id_b','EO 777');await p.fill('#id_n','Candra Wirawan');await p.fill('#id_p','Welder');await p.selectOption('#id_vp2 .vsel','7');await p.selectOption('#id_vp2 .vsel','o');await p.fill('#id_vp2 .vor','Hot surface');await p.fill('#id_vp2 .vom','Touched pipe without sleeves');await p.click('#id_vp2 .vod');ok((await p.innerText('#id_vp2')).includes('Hot surface')&&(await p.$$('#id_vp2 .vchip')).length===2,'IC picks a standard violation + Other with reason and remark');
   await p.click('#id_s');ok((await p.textContent('#toast')).length>5,'submit without photo refused: '+await p.textContent('#toast'));
   const tmp='/tmp/badge.jpg';require('fs').writeFileSync(tmp,JPG);
   await p.setInputFiles('#id_f',tmp);await p.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');
   await p.click('#id_s');await p.waitForFunction(()=>/Sent/.test(document.getElementById('toast').textContent));
   await p.click('#nav [data-tab=reg]');ok((await p.innerText('#tab-reg')).includes('Candra Wirawan')&&(await p.innerText('#tab-reg')).includes('Waiting for verification'),'IC sees own company warning as Pending');
   ok(!(await p.innerText('body')).includes('Letter'),'no letter button for IC');
-  await p.click('#nav [data-tab=new]');
+  await p.click('#bnew');
   g.post({action:'review',token:A,id:1,decision:'verify'});
   await p.fill('#id_b','eo777');await p.waitForFunction(()=>document.getElementById('id_n').readOnly);
   ok(await p.inputValue('#id_n')==='Candra Wirawan'&&await p.inputValue('#id_l')==='2','known badge: name locked, level preset SP2');
@@ -44,15 +44,15 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   const c2=await ctxFor(),q=await open(c2);
   await signin(q,'iggy@example.com');
   const atabs=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(atabs.length===10&&atabs.includes('rev')&&atabs.includes('set'),'admin sees all tabs: '+atabs);
+  ok(atabs.length===9&&await q.isVisible('#bnew')&&atabs.includes('rev')&&atabs.includes('set'),'admin sees all tabs: '+atabs);
   await q.click('#nav [data-tab=set]');await q.waitForSelector('#usl table');ok((await q.textContent('#usl')).includes('gsb@x.com'),'users list shows IC');
-  await q.click('#nav [data-tab=new]');
+  await q.click('#bnew');
   await q.fill('#nd','2026-10-10');await q.selectOption('#nc','WEN');await q.fill('#nn','Dewi Lestari');await q.fill('#ni','EO 321');await q.fill('#np','Helper');await q.selectOption('#nvp .vsel','2');await q.fill('#nb','Iggy');
   await q.click('#sv');await q.waitForSelector('#tab-reg.on table');ok((await q.textContent('#tab-reg')).includes('Dewi Lestari'),'admin adds a verified warning directly');
   // IC adds another for review
   const p2=await open(await ctxFor());await signin(p2,'gsb@x.com');
   g.post({action:'reqcode',email:'gsb@x.com'});
-  await p2.click('#nav [data-tab=new]');await p2.fill('#id_b','EO 888');await p2.fill('#id_n','Eko Prasetyo');await p2.fill('#id_p','Fitter');await p2.selectOption('#id_vp2 .vsel','9');await p2.setInputFiles('#id_f',tmp);await p2.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');await p2.click('#id_s');await p2.waitForFunction(()=>/Sent/.test(document.getElementById('toast').textContent));
+  await p2.click('#bnew');await p2.fill('#id_b','EO 888');await p2.fill('#id_n','Eko Prasetyo');await p2.fill('#id_p','Fitter');await p2.selectOption('#id_vp2 .vsel','9');await p2.setInputFiles('#id_f',tmp);await p2.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');await p2.click('#id_s');await p2.waitForFunction(()=>/Sent/.test(document.getElementById('toast').textContent));
   await q.click('#nav [data-tab=dash]');await q.reload();
   ok(true,'reload keeps session');
   await q.waitForSelector('#nav button:visible');
@@ -79,19 +79,19 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   // --- v2.2: admin 'IC view' preview
   await q.click('#nav [data-tab=icv]');await q.selectOption('#icc','GSB');await q.click('#icg');await q.waitForSelector('#tab-wait.on');
   const pt=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(pt)==='["wait","reg","new","wk","out"]','IC view shows exactly the IC tabs: '+pt);
+  ok(JSON.stringify(pt)==='["wait","reg","wk","out"]','IC view shows exactly the IC tabs: '+pt);
   ok((await q.innerText('#pvb')).includes('Preview only'),'preview banner shown');
   ok(!(await q.innerText('#tab-wait')).includes('WEN'),'IC view lists only that company');
-  await q.click('#nav [data-tab=new]');await q.fill('#id_b','EO 9090');await q.fill('#id_n','Test');await q.fill('#id_p','x');await q.selectOption('#id_vp2 .vsel','0');await q.setInputFiles('#id_f',tmp);await q.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');
+  await q.click('#bnew');await q.fill('#id_b','EO 9090');await q.fill('#id_n','Test');await q.fill('#id_p','x');await q.selectOption('#id_vp2 .vsel','0');await q.setInputFiles('#id_f',tmp);await q.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');
   const before=g.post({action:'list',token:A}).records.length;await q.click('#id_s');await q.waitForTimeout(500);
   ok(g.post({action:'list',token:A}).records.length===before&&/Preview only/.test(await q.textContent('#toast')),'sending is blocked in the preview');
   await q.click('#nav [data-tab=out]');await q.waitForSelector('#tab-icv.on');
-  ok((await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).length))===10,'exit returns to the admin menu');
+  ok((await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).length))===9,'exit returns to the admin menu');
   // --- v2.3 viewer UI
   g.post({action:'usersave',token:A,user:{email:'ron@x.com',name:'Ron',company:'EcoOils',role:'viewer'}});
   g.clearWait();const pv=await open(await ctxFor());await signin(pv,'ron@x.com');
   const vt=await pv.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(vt)==='["dash","reg","wk","rev","legal","out"]'||vt.join()==='dash,reg,rev,wk,legal,out','viewer tabs: '+vt);
+  ok(JSON.stringify(vt)==='["dash","reg","wk","rev","legal","out"]'||vt.join()==='dash,reg,rev,wk,legal,out','viewer tabs: '+vt);ok(!(await pv.isVisible('#bnew')),'viewer has no New Warning button');
   await pv.click('#nav [data-tab=reg]');await pv.waitForSelector('#tab-reg table');
   ok((await pv.$$('#tab-reg [data-e],#tab-reg [data-d],#tab-reg [data-l]')).length===0&&(await pv.innerText('#tab-reg')).includes('Dewi Lestari'),'viewer sees the full register without edit/delete/letter');
   // languages
