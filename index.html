@@ -85,6 +85,7 @@ button:disabled{opacity:.4;cursor:default}
 .reco.r1{border-left-color:var(--grey)}.reco.r2{border-left-color:var(--yellow);background:#fffbe6}.reco.r3,.reco.rp{border-left-color:var(--black);background:#fff3bf}
 .muted{color:var(--mut);font-size:14px}
 .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:14px}
+.lad{display:flex;align-items:stretch;gap:6px;margin:10px 0}.lad i{align-self:center;color:var(--mut,#888);font-style:normal}.ls{flex:1;border:1px solid var(--line,#ccc);border-radius:8px;padding:8px;text-align:center;font-size:.85em;opacity:.55}.ls b{display:block;font-size:1.1em}.ls.past{opacity:.9}.ls.on{opacity:1;border:2px solid #c00}
 .wk{display:grid;grid-template-columns:clamp(260px,24vw,380px) 1fr;gap:14px}
 @media(max-width:900px){.wk{grid-template-columns:1fr}}
 .wlist{max-height:60vh;overflow:auto}
@@ -224,7 +225,7 @@ document.addEventListener("focusout",e=>{const el=e.target,id=el&&el.id;if(!id||
   if(id==="nn"||id==="id_n"||id==="nb")el.value=titleCase_(el.value);
   else if(id==="np"||id==="id_p")el.value=titleCase_(el.value,true);
   else if(el.closest&&el.closest(".vchips,.vo,#pvp,#nvp,#id_v")&&(el.tagName==="INPUT"||el.tagName==="TEXTAREA")&&el.type==="text"|| (el.classList&&el.classList.contains("vo-in")))el.value=sentenceCase_(el.value)});
-const VERSION="2.8.0";
+const VERSION="2.8.1";
 const BUILD_DATE="2026-10-29";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
@@ -572,6 +573,12 @@ function rNew(){
 }
 
 /* ---------- worker history ---------- */
+function wladder(sel,a){
+  const ver=sel.recs.filter(r=>r.level!=="ZT"),today=todayStr();
+  const step=n=>{const rs=ver.filter(r=>+r.level===n).sort((x,y)=>y.date.localeCompare(x.date));const act=rs.find(r=>{const i=a.info.get(r.id);return i&&i.active});const r=act||rs[0];
+    const cls=act?"on":r?"past":"";
+    return'<div class="ls '+cls+'"><b>SP'+n+'</b><span>'+(r?fmt(r.date)+"<br>"+esc(t(act?"w_active":"w_expired")):"—")+"</span></div>"};
+  return'<div class="lad">'+step(1)+"<i>›</i>"+step(2)+"<i>›</i>"+step(3)+"</div>"+(sel.zt?'<div class="reco rp"><b>Zero Tolerance × '+sel.zt+"</b></div>":"")}
 function rWk(){
   const el=$("#tab-wk"),a=analyze(),q=norm(UI.wq);
   const list=a.workers.filter(w=>!isIC()||norm(w.company)===norm(icCo())).filter(w=>!q||norm(w.name+" "+w.empId+" "+w.company).includes(q)).sort((x,y)=>y.cur-x.cur||y.total-x.total||x.name.localeCompare(y.name));
@@ -582,13 +589,13 @@ function rWk(){
     let nx;if(rc.phk)nx=t("rec_phk",{d:fmt(rc.best.date),u:fmt(lastValid(rc.best.date))});else if(!rc.maxA)nx=t("rec_none");else nx=t("rec_next",{a:rc.maxA,d:fmt(rc.best.date),u:fmt(lastValid(rc.best.date)),n:rc.next});
     det='<div class="card"><h2>'+esc(sel.name)+'</h2><div class="muted">'+esc(sel.empId)+" · "+esc(sel.company)+" · "+esc(sel.position)+"</div>"
      +'<p><b>'+esc(t("w_cur"))+":</b> "+cur+'</p><div class="reco '+(rc.phk?"rp":"r"+rc.next)+'"><b>'+esc(t("w_next"))+":</b> "+esc(nx)+"</div>"
-     +"<h2>"+esc(t("w_hist"))+'</h2><div class="tl">'+sel.recs.slice().reverse().map(r=>{const i=a.info.get(r.id);
+     +wladder(sel,a)+"<h2>"+esc(t("w_hist"))+'</h2><div class="tl">'+sel.recs.slice().reverse().map(r=>{const i=a.info.get(r.id);
        return"<div><b>"+fmt(r.date)+"</b> "+badge(r.level)+" "+(isIC()?"":chk(r))+'<br><span class="muted">'+(r.level==="ZT"?"":esc(t("w_valid",{a:fmt(r.date),b:fmt(i.until)}))+" · "+esc(t(i.active?"w_active":"w_expired")))+"</span><br>"+esc(r.violation).replace(/\n/g,"<br>")+'<br><span class="muted">'+esc(t("th_by"))+": "+esc(r.givenBy)+'</span> <button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+"</button></div>"}).join("")+"</div></div>";
   }
   el.innerHTML='<div class="wk"><div class="card"><input id="wq" placeholder="'+esc(t("w_search"))+'" value="'+esc(UI.wq)+'" style="margin-bottom:8px"><div class="wlist">'
    +list.slice(0,300).map(w=>'<div class="wi'+(w.key===UI.wsel?" on":"")+'" data-k="'+esc(w.key)+'"><span><b>'+esc(w.name)+'</b><br><span class="muted">'+esc(w.empId)+" · "+esc(w.company)+"</span></span><span>"+(w.cur?badge(String(w.cur)):'<span class="muted">'+w.total+"</span>")+"</span></div>").join("")+"</div></div><div>"+det+"</div></div>";
   $("#wq").oninput=e=>{UI.wq=e.target.value;const p=e.target.selectionStart;rWk();const n=$("#wq");n.focus();n.setSelectionRange(p,p)};
-  el.querySelectorAll("[data-k]").forEach(d=>d.onclick=()=>{UI.wsel=d.dataset.k;rWk()});
+  el.querySelectorAll("[data-k]").forEach(d=>d.onclick=()=>{UI.wsel=d.dataset.k;rWk();if(innerWidth<=900){const x=document.querySelector("#tab-wk .wk>div:last-child");x&&x.scrollIntoView({behavior:"smooth",block:"start"})}});
   el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>openLetter(+b.dataset.l));
   if(isIC()||isView())el.querySelectorAll("[data-l]").forEach(b=>b.remove());
 }

@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.8.0)
+# EcoOils Project – Disciplinary Record (v2.8.1)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -58,6 +58,9 @@ Information summary, not legal advice. Contractor workers are employed by the co
 - Sign in with **email + 6-digit PIN**. The emailed code is now only for **"Forgot PIN, or first time?"**: code + a new PIN (typed twice), then signed in. PINs are never typed into the code or the Sheet: stored salted + hashed in the 'Pins' sheet (salt in script property PIN_SALT, created automatically).
 - 5 wrong PINs lock that email for 15 minutes (the same lock answer for unknown emails; unknown email, no PIN and wrong PIN give the same message). Sessions still last 30 days, so the PIN is only needed on a new device or after sign-out.
 - **First time after this update everybody (including the admin) uses "Forgot PIN, or first time?" once to create a PIN.** Code.gs v2.7 must be redeployed (new action `login`; `verify` now needs `pin`).
+
+## v2.8.1
+- Worker History: a visual SP1 › SP2 › SP3 ladder (date and active/expired per step, Zero Tolerance count) at the top of each worker, for every role including ICs. On phones, tapping a worker now scrolls to the detail (it used to open below the long list, out of sight). Front end only; Code.gs unchanged (2.8.0).
 
 ## v2.8.0
 - Uniform capitalisation. Names, positions and "given by" become Title Case (extra spaces removed; short acronyms such as QC, HSE, PPE kept); violation text gets a capital at the start of every sentence (all-capitals text is lower-cased first, acronyms kept). Done on the server (add, fill, post, import, edit; Code.gs 2.8.0) and live in the form when you leave the field. Old records are normalised when you run Settings > Replace with the cleaned Excel.
