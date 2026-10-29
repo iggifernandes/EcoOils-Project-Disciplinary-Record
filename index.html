@@ -187,7 +187,7 @@ header.eh .eh-l button.on,header.eh .eh-l button.active,header.eh .eh-l button[a
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 "use strict";
-const VERSION="2.3.0";
+const VERSION="2.4.0";
 const BUILD_DATE="2026-10-28";
 const DEFAULT_SYNC_URL="https://script.google.com/macros/s/AKfycbzC1EUvMoebq_aP_Ph2ZQo-4DntR56W3D0f-QvzvieB16TXCVQnpsEmZIDf8BEJWXlx/exec";
 const LS_KEY="ecooils-disciplinary-v1";
@@ -449,8 +449,8 @@ function rNew(){
 /* ---------- worker history ---------- */
 function rWk(){
   const el=$("#tab-wk"),a=analyze(),q=norm(UI.wq);
-  const list=a.workers.filter(w=>!q||norm(w.name+" "+w.empId+" "+w.company).includes(q)).sort((x,y)=>y.cur-x.cur||y.total-x.total||x.name.localeCompare(y.name));
-  const sel=UI.wsel&&a.byKey.get(UI.wsel);
+  const list=a.workers.filter(w=>!isIC()||norm(w.company)===norm(icCo())).filter(w=>!q||norm(w.name+" "+w.empId+" "+w.company).includes(q)).sort((x,y)=>y.cur-x.cur||y.total-x.total||x.name.localeCompare(y.name));
+  const sel=UI.wsel&&a.byKey.get(UI.wsel);if(sel&&isIC()&&norm(sel.company)!==norm(icCo()))UI.wsel=null;
   let det='<div class="card muted">'+esc(t("w_pick"))+"</div>";
   if(sel){
     const rc=recommend(sel.key,todayStr()),cur=sel.cur?badge(String(sel.cur))+" · "+esc(t("th_until"))+" "+fmt(sel.curUntil):esc(t("w_cur_none"));
@@ -458,13 +458,14 @@ function rWk(){
     det='<div class="card"><h2>'+esc(sel.name)+'</h2><div class="muted">'+esc(sel.empId)+" · "+esc(sel.company)+" · "+esc(sel.position)+"</div>"
      +'<p><b>'+esc(t("w_cur"))+":</b> "+cur+'</p><div class="reco '+(rc.phk?"rp":"r"+rc.next)+'"><b>'+esc(t("w_next"))+":</b> "+esc(nx)+"</div>"
      +"<h2>"+esc(t("w_hist"))+'</h2><div class="tl">'+sel.recs.slice().reverse().map(r=>{const i=a.info.get(r.id);
-       return"<div><b>"+fmt(r.date)+"</b> "+badge(r.level)+" "+chk(r)+'<br><span class="muted">'+(r.level==="ZT"?"":esc(t("w_valid",{a:fmt(r.date),b:fmt(i.until)}))+" · "+esc(t(i.active?"w_active":"w_expired")))+"</span><br>"+esc(r.violation).replace(/\n/g,"<br>")+'<br><span class="muted">'+esc(t("th_by"))+": "+esc(r.givenBy)+'</span> <button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+"</button></div>"}).join("")+"</div></div>";
+       return"<div><b>"+fmt(r.date)+"</b> "+badge(r.level)+" "+(isIC()?"":chk(r))+'<br><span class="muted">'+(r.level==="ZT"?"":esc(t("w_valid",{a:fmt(r.date),b:fmt(i.until)}))+" · "+esc(t(i.active?"w_active":"w_expired")))+"</span><br>"+esc(r.violation).replace(/\n/g,"<br>")+'<br><span class="muted">'+esc(t("th_by"))+": "+esc(r.givenBy)+'</span> <button class="btn sm sec" data-l="'+r.id+'">'+esc(t("letter"))+"</button></div>"}).join("")+"</div></div>";
   }
   el.innerHTML='<div class="wk"><div class="card"><input id="wq" placeholder="'+esc(t("w_search"))+'" value="'+esc(UI.wq)+'" style="margin-bottom:8px"><div class="wlist">'
    +list.slice(0,300).map(w=>'<div class="wi'+(w.key===UI.wsel?" on":"")+'" data-k="'+esc(w.key)+'"><span><b>'+esc(w.name)+'</b><br><span class="muted">'+esc(w.empId)+" · "+esc(w.company)+"</span></span><span>"+(w.cur?badge(String(w.cur)):'<span class="muted">'+w.total+"</span>")+"</span></div>").join("")+"</div></div><div>"+det+"</div></div>";
   $("#wq").oninput=e=>{UI.wq=e.target.value;const p=e.target.selectionStart;rWk();const n=$("#wq");n.focus();n.setSelectionRange(p,p)};
   el.querySelectorAll("[data-k]").forEach(d=>d.onclick=()=>{UI.wsel=d.dataset.k;rWk()});
   el.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>openLetter(+b.dataset.l));
+  if(isIC()||isView())el.querySelectorAll("[data-l]").forEach(b=>b.remove());
 }
 
 /* ---------- legal reference ---------- */
@@ -654,13 +655,13 @@ function signOut(){PV=null;const tk=TOKEN;TOKEN="";ME=null;S.records=[];A=null;t
   if(tk)fetch(API,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"logout",token:tk})}).catch(()=>{});
   UI.lg=null;setMode();go("lg")}
 function setMode(){
-  const adm=ME&&ME.role==="admin"&&!PV,show=PV?["wait","reg","new"]:isView()?["dash","reg","rev","wk","legal"]:adm?["dash","reg","rev","post","new","wk","legal","set","icv"]:ME?["wait","reg","new"]:[];
+  const adm=ME&&ME.role==="admin"&&!PV,show=PV?["wait","reg","wk","new"]:isView()?["dash","reg","rev","wk","legal"]:adm?["dash","reg","rev","post","new","wk","legal","set","icv"]:ME?["wait","reg","wk","new"]:[];
   document.querySelectorAll("#nav button").forEach(b=>{b.style.display=(b.dataset.tab==="out"?!!ME:show.includes(b.dataset.tab))?"":"none"});
   $("#nav").style.display=ME?"flex":"none";
   const ob=document.querySelector('#nav [data-tab=out]');if(ob)ob.textContent=PV?t("pv_exit"):t("t_out");
   const pb=$("#pvb");pb.style.display=PV?"block":"none";pb.textContent=PV?t("pv_bar",{c:PV.company}):"";
 }
-function gate(tab){if(!ME)return"lg";if(PV)return["wait","reg","new"].includes(tab)?tab:"wait";if(ME.role==="viewer")return["dash","reg","rev","wk","legal"].includes(tab)?tab:"dash";if(ME.role!=="admin")return["wait","reg","new"].includes(tab)?tab:"wait";if(tab==="lg")return"dash";return tab}
+function gate(tab){if(!ME)return"lg";if(PV)return["wait","reg","wk","new"].includes(tab)?tab:"wait";if(ME.role==="viewer")return["dash","reg","rev","wk","legal"].includes(tab)?tab:"dash";if(ME.role!=="admin")return["wait","reg","wk","new"].includes(tab)?tab:"wait";if(tab==="lg")return"dash";return tab}
 const stChip=r=>{const s=r.status||"Verified";return'<span class="st '+(s==="Verified"?"ok":s==="Pending"||s==="Awaiting"?"skipped":"zt")+'">'+esc(t("st_"+s.toLowerCase()))+"</span>"+(s==="Rejected"&&r.note?'<div class="muted">'+esc(r.note)+"</div>":"")};
 const flagChips=r=>r.flags?'<div style="margin:4px 0">'+r.flags.split(",").filter(Boolean).map(f=>'<span class="st skipped" style="margin:0 4px 4px 0">'+esc(t("fl_"+f))+"</span>").join("")+"</div>":"";
 function pendBanner(){const n=S.records.filter(r=>r.status==="Pending").length,w=S.records.filter(r=>r.status==="Awaiting").length;return(w?'<div class="note" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>'+esc(t("aw_banner",{n:w}))+'</span><button class="btn sm" onclick="go(\'rev\')">'+esc(t("dash_go"))+"</button></div>":"")+(n?'<div class="note" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap"><span>'+esc(t("dash_pend",{n}))+'</span><button class="btn sm" onclick="go(\'rev\')">'+esc(t("dash_go"))+"</button></div>":"")}

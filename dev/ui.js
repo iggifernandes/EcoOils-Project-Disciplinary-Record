@@ -24,7 +24,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   ok(await p.isVisible('#lge')&&!(await p.isVisible('#nav')),'signed out: only the login shows');
   await signin(p,'gsb@x.com');
   const tabs=await p.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(tabs)==='["wait","reg","new","out"]','IC tabs wait/reg/new/out: '+tabs);
+  ok(JSON.stringify(tabs)==='["wait","reg","new","wk","out"]','IC tabs wait/reg/wk/new/out: '+tabs);
   await p.click('#nav [data-tab=new]');await p.fill('#id_d','2026-10-01');await p.fill('#id_b','EO 777');await p.fill('#id_n','Candra Wirawan');await p.fill('#id_p','Welder');await p.fill('#id_v','Welding without face shield');
   await p.click('#id_s');ok((await p.textContent('#toast')).length>5,'submit without photo refused: '+await p.textContent('#toast'));
   const tmp='/tmp/badge.jpg';require('fs').writeFileSync(tmp,JPG);
@@ -37,6 +37,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   await p.fill('#id_b','eo777');await p.waitForFunction(()=>document.getElementById('id_n').readOnly);
   ok(await p.inputValue('#id_n')==='Candra Wirawan'&&await p.inputValue('#id_l')==='2','known badge: name locked, level preset SP2');
   await p.screenshot({path:'/tmp/ic390.png'});
+  await p.evaluate(()=>reload());await p.waitForTimeout(500);await p.click('#nav [data-tab=wk]');{const w=await p.innerText('#tab-wk');ok(w.includes('Candra Wirawan'),'IC worker history lists own worker: '+w.slice(0,300).replace(/\n/g,' '));ok(!w.includes('Dewi Lestari'),'IC worker history hides other companies');await p.click('#tab-wk .card >> text=Candra Wirawan').catch(()=>{});ok(!(await p.innerText('body')).includes('Letter'),'no letter button in IC worker history');}
   await p.click('#nav [data-tab=out]');await p.waitForSelector('#lge');ok(true,'sign out returns to login');
   // --- Admin flow
   g.post({action:'add',token:g.post({action:'verify',email:'gsb@x.com',code:(g.post({action:'reqcode',email:'gsb@x.com'}),g.mails.pop().subject.match(/(\d{6})/)[1])}).token||'',rec:{},photo:''});
@@ -78,7 +79,7 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   // --- v2.2: admin 'IC view' preview
   await q.click('#nav [data-tab=icv]');await q.selectOption('#icc','GSB');await q.click('#icg');await q.waitForSelector('#tab-wait.on');
   const pt=await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
-  ok(JSON.stringify(pt)==='["wait","reg","new","out"]','IC view shows exactly the IC tabs: '+pt);
+  ok(JSON.stringify(pt)==='["wait","reg","new","wk","out"]','IC view shows exactly the IC tabs: '+pt);
   ok((await q.innerText('#pvb')).includes('Preview only'),'preview banner shown');
   ok(!(await q.innerText('#tab-wait')).includes('WEN'),'IC view lists only that company');
   await q.click('#nav [data-tab=new]');await q.fill('#id_b','EO 9090');await q.fill('#id_n','Test');await q.fill('#id_p','x');await q.fill('#id_v','y');await q.setInputFiles('#id_f',tmp);await q.waitForFunction(()=>document.getElementById('id_pv').style.display==='block');

@@ -1,4 +1,4 @@
-# EcoOils Project – Disciplinary Record (v2.3.0)
+# EcoOils Project – Disciplinary Record (v2.4.0)
 
 Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracking. Multi-user: EcoOils HSSE (admin) and the IC admins (GSB, WEN, KKS, PBS).
 
@@ -29,3 +29,7 @@ No data in this repo. Records live in your Google Sheet, badge photos in a priva
 
 ## Legal note
 Information summary, not legal advice. Contractor workers are employed by the contractor (IC), which issues any formal SP / PHK under its own PK / PP / PKB. Verify against official texts (peraturan.go.id / JDIH).
+
+
+## v2.4.0
+- IC admins now have a **Worker history** tab: ladder history (SP level, validity, timeline) for the workers of their own company only. No letters, flags or other companies. Also shown in the admin 'IC view'. Front end only, Code.gs unchanged (v2.3).
