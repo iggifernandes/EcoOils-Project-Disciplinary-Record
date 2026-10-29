@@ -111,6 +111,8 @@ function ladder_(all, bkey, date, exceptId) {
 }
 
 /* ---------- auth ---------- */
+function role_(x) { x = norm_(x); return x === 'admin' ? 'admin' : x === 'viewer' ? 'viewer' : 'ic'; }
+function canRead_(u) { return u.role === 'admin' || u.role === 'viewer'; }
 function users_() { return rows_(userSh_(), USER_H); }
 function findUser_(email) {
   email = norm_(email);
@@ -149,7 +151,7 @@ function verify_(b) {
   if (str_(b.code).trim() !== st.code) { st.tries++; c.put('code:' + email, JSON.stringify(st), CODE_TTL); return { ok: false, error: 'code' }; }
   c.remove('code:' + email);
   var token = Utilities.getUuid() + Utilities.getUuid();
-  var sess = { email: u.email, name: u.name, company: u.company, role: norm_(u.role) === 'admin' ? 'admin' : 'ic' };
+  var sess = { email: u.email, name: u.name, company: u.company, role: role_(u.role) };
   c.put('sess:' + token, JSON.stringify(sess), SESS_TTL);
   // persistent session (30 days, sliding): survives cache eviction and the 6 h cache limit; only a hash of the token is stored
   var ss = sesSh_(), now = new Date().getTime(), v = ss.getDataRange().getValues();
@@ -176,7 +178,7 @@ function sess_(token) {
   }
   var u = findUser_(email);                       // deactivated users lose access at once
   if (!u) return null;
-  var sess = { email: u.email, name: u.name, company: u.company, role: norm_(u.role) === 'admin' ? 'admin' : 'ic' };
+  var sess = { email: u.email, name: u.name, company: u.company, role: role_(u.role) };
   c.put('sess:' + token, JSON.stringify(sess), SESS_TTL);
   return sess;
 }
@@ -187,13 +189,13 @@ function pub_(r, u) {
   REC_H.forEach(function (h) { o[h] = r[h]; });
   o.hasPhoto = r.photoId ? '1' : '';
   delete o.photoId; delete o.photoHash;
-  if (u.role !== 'admin') { delete o.flags; delete o.addedBy; delete o.verifiedBy; delete o.source; }
+  if (!canRead_(u)) { delete o.flags; delete o.addedBy; delete o.verifiedBy; delete o.source; }
   return o;
 }
 function visible_(all, u) {
   return all.filter(function (r) {
     if (r.status === 'Deleted') return false;
-    return u.role === 'admin' || norm_(r.company) === norm_(u.company);
+    return canRead_(u) || norm_(r.company) === norm_(u.company);
   });
 }
 
@@ -209,10 +211,11 @@ function lookup_(b, u) {
   var all = recs_().filter(function (r) { return r.status !== 'Deleted'; });
   var date = /^\d{4}-\d{2}-\d{2}$/.test(b.date) ? b.date : Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
   var L = ladder_(all, key, date, '');
-  if (u.role !== 'admin' && L.known && L.company && norm_(L.company) !== norm_(u.company)) return { ok: true, known: true, other: true };
+  if (!canRead_(u) && L.known && L.company && norm_(L.company) !== norm_(u.company)) return { ok: true, known: true, other: true };
   return { ok: true, known: L.known, name: L.name, company: L.company, maxA: L.maxA, next: L.next, phk: L.phk, since: L.since, until: L.until };
 }
 function add_(b, u) {
+  if (u.role === 'viewer') return { ok: false, error: 'forbidden' };
   var d = b.rec || {};
   var date = str_(d.date).slice(0, 10), level = str_(d.level);
   var name = str_(d.name).trim(), empId = str_(d.empId).trim().replace(/\s+/g, ' ');
@@ -291,7 +294,7 @@ function post_(b, u) {
 }
 /** The IC completes a posted item: badge number, name, position, level. The photo stays the one HSSE posted. */
 function fill_(b, u) {
-  if (u.role === 'admin') return { ok: false, error: 'forbidden' };
+  if (u.role !== 'ic') return { ok: false, error: 'forbidden' };
   var d = b.rec || {}, name = str_(d.name).trim(), empId = str_(d.empId).trim().replace(/\s+/g, ' '), pos = str_(d.position).trim(), level = str_(d.level);
   if (['1', '2', '3', 'ZT'].indexOf(level) < 0) return { ok: false, error: 'bad_request' };
   if (!name || badgeKey_(empId).length < 3 || !pos) return { ok: false, error: 'missing' };
@@ -410,7 +413,7 @@ function import_(b, u) {
 function photo_(b, u) {
   var r = recs_().filter(function (x) { return String(x.id) === String(b.id); })[0];
   if (!r || r.status === 'Deleted' || !r.photoId) return { ok: false, error: 'not_found' };
-  if (u.role !== 'admin' && norm_(r.company) !== norm_(u.company)) return { ok: false, error: 'forbidden' };
+  if (!canRead_(u) && norm_(r.company) !== norm_(u.company)) return { ok: false, error: 'forbidden' };
   var bytes = DriveApp.getFileById(r.photoId).getBlob().getBytes();
   return { ok: true, data: 'data:image/jpeg;base64,' + Utilities.base64Encode(bytes) };
 }
@@ -422,7 +425,7 @@ function users_save_(b, u) {
   if (u.role !== 'admin') return { ok: false, error: 'forbidden' };
   var d = b.user || {}, email = norm_(d.email);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'bad_email' };
-  var role = d.role === 'admin' ? 'admin' : 'ic', company = str_(d.company).trim();
+  var role = d.role === 'admin' ? 'admin' : d.role === 'viewer' ? 'viewer' : 'ic', company = str_(d.company).trim();
   if (role === 'ic' && !company) return { ok: false, error: 'missing' };
   var active = d.active === 'no' ? 'no' : 'yes';
   if (email === norm_(u.email) && (role !== 'admin' || active === 'no')) return { ok: false, error: 'self' };

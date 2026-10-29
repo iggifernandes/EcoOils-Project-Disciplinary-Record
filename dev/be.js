@@ -74,4 +74,11 @@ const fl=g.post({action:'list',token:A}).records.find(r=>r.id==po.id);ok(fl.stat
 ok(g.post({action:'fill',token:K,id:po.id,rec:{empId:'EO 55',name:'Fajar',position:'Rigger',level:'1'}}).error==='not_found','cannot fill twice');
 g.post({action:'post',token:A,rec:{company:'WEN',date:'2026-10-20',violation:'Smoking'},photo:Buffer.from('zz').toString('base64')});
 g.clearWait();ok(g.ctx.__remind()===1&&g.mails.some(m=>m.to==='wen@x.com'&&/waiting/.test(m.subject)&&!/Smoking/.test(m.body)),'daily reminder emailed to WEN IC, counts only');
+// --- v2.3 viewer role (Hocine / Agung / Ron)
+ok(g.post({action:'usersave',token:A,user:{email:'hocine@x.com',name:'Hocine',company:'EcoOils',role:'viewer'}}).ok,'admin adds a viewer');
+g.clearWait();const V=login('hocine@x.com').token;ok(V,'viewer logs in');
+const vl=g.post({action:'list',token:V});ok(vl.records.length>3&&vl.records.some(r=>r.company==='WEN')&&vl.records.some(r=>r.company==='GSB')&&'flags' in vl.records[0],'viewer sees all companies incl. flags');
+ok(g.post({action:'photo',token:V,id:1}).ok,'viewer sees photos');
+for(const [a,x] of [['post',{rec:{company:'GSB',date:'2026-10-27',violation:'x'},photo:jpg}],['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',position:'p',level:'1',violation:'v'},photo:jpg}],['review',{id:2,decision:'verify'}],['update',{id:2,rec:{name:'Z'}}],['delete',{id:2}],['import',{records:[]}],['users',{}],['usersave',{user:{email:'a@b.co',role:'admin'}}],['audit',{}],['fill',{id:1,rec:{}}]])
+  ok(g.post({action:a,token:V,...x}).error==='forbidden',"viewer cannot "+a);
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);

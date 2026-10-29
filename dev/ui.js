@@ -86,6 +86,13 @@ const JPG=Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP///////////////////////
   ok(g.post({action:'list',token:A}).records.length===before&&/Preview only/.test(await q.textContent('#toast')),'sending is blocked in the preview');
   await q.click('#nav [data-tab=out]');await q.waitForSelector('#tab-icv.on');
   ok((await q.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).length))===10,'exit returns to the admin menu');
+  // --- v2.3 viewer UI
+  g.post({action:'usersave',token:A,user:{email:'ron@x.com',name:'Ron',company:'EcoOils',role:'viewer'}});
+  g.clearWait();const pv=await open(await ctxFor());await signin(pv,'ron@x.com');
+  const vt=await pv.$$eval('#nav button',bs=>bs.filter(x=>x.offsetParent).map(x=>x.dataset.tab));
+  ok(JSON.stringify(vt)==='["dash","reg","wk","rev","legal","out"]'||vt.join()==='dash,reg,rev,wk,legal,out','viewer tabs: '+vt);
+  await pv.click('#nav [data-tab=reg]');await pv.waitForSelector('#tab-reg table');
+  ok((await pv.$$('#tab-reg [data-e],#tab-reg [data-d],#tab-reg [data-l]')).length===0&&(await pv.innerText('#tab-reg')).includes('Dewi Lestari'),'viewer sees the full register without edit/delete/letter');
   // languages
   for(const l of['id','ms']){await q.click('.lang [data-lang='+l+']');await q.click('#nav [data-tab=rev]');}
   ok(errs.length===0,'no page errors '+errs.join('|'));
