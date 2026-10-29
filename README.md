@@ -6,7 +6,7 @@ Site safety warning register for the Mentari Project with SP1 / SP2 / SP3 tracki
 • HSSE posts the punched-badge photo + violation in the app (Post photo). The IC admin of that company sees it under "Waiting for you", enters badge number / name / position / level, then HSSE verifies. Open items show per company with age on the Review tab; a daily 08:00 email reminds each IC (counts only)
 • Each IC sees only its own company's warnings (status, photo, active SP level), never other companies
 • Person key = EcoOils ID badge number. Every warning needs the photo of the punched ID badge
-• IC admins sign in with a one-time email code (no passwords). They see only their own company
+• IC admins sign in with a one-time email code (no passwords); the session lasts 30 days (stored in the Sessions sheet, hashed), so no new code each visit. They see only their own company
 • An IC warning is Pending until an EcoOils admin verifies it against the badge posted in the WhatsApp group; only Verified warnings count for the SP ladder
 • ICs cannot edit, delete or verify. Admin edits, deletions and verifications are logged (Audit sheet)
 • Identity drift flags for the admin: NAME_MISMATCH, SAME_NAME_NEW_BADGE, PHOTO_REUSED, LEVEL_MISMATCH, SP3_ACTIVE.

@@ -3,10 +3,10 @@ const vm=require('vm'),fs=require('fs'),crypto=require('crypto');
 module.exports=function(codePath){
   const mails=[];const sheets={};const props={};const cache={};const files={};let fid=0;
   class Sheet{constructor(n){this.n=n;this.v=[];this.fr=0}
-    appendRow(a){this.v.push(a.slice())}setFrozenRows(){}
+    appendRow(a){this.v.push(a.slice())}setFrozenRows(){}deleteRow(r){this.v.splice(r-1,1)}
     getLastRow(){return this.v.length}
     getDataRange(){return{getValues:()=>this.v.map(r=>r.slice())}}
-    getRange(r,c,n=1,m=1){const s=this;return{setNumberFormat(){return this},setValues(vals){for(let i=0;i<n;i++){while(s.v.length<r-1+i+1)s.v.push([]);for(let j=0;j<m;j++)s.v[r-1+i][c-1+j]=vals[i][j]}return this}}}}
+    getRange(r,c,n=1,m=1){const s=this;return{setValue(x){while(s.v.length<r)s.v.push([]);s.v[r-1][c-1]=x},setNumberFormat(){return this},setValues(vals){for(let i=0;i<n;i++){while(s.v.length<r-1+i+1)s.v.push([]);for(let j=0;j<m;j++)s.v[r-1+i][c-1+j]=vals[i][j]}return this}}}}
   const SS={getSheetByName:n=>sheets[n]||null,insertSheet:n=>(sheets[n]=new Sheet(n))};
   const pad=(n,l=2)=>String(n).padStart(l,'0');
   const ctx={
@@ -29,5 +29,5 @@ module.exports=function(codePath){
   };
   vm.createContext(ctx);vm.runInContext(fs.readFileSync(codePath,'utf8')+'\n;this.__doPost=doPost;this.__setup=setup;this.__migrate=migrateLegacy;this.__remind=remindICs;',ctx);
   ctx.__setup();
-  return{clearWait:()=>Object.keys(cache).filter(k=>k.startsWith('wait:')).forEach(k=>delete cache[k]),mails,sheets,post:body=>JSON.parse(ctx.__doPost({postData:{contents:JSON.stringify(body)}}).s),ctx,files};
+  return{evict:()=>Object.keys(cache).filter(k=>k.startsWith('sess:')).forEach(k=>delete cache[k]),clearWait:()=>Object.keys(cache).filter(k=>k.startsWith('wait:')).forEach(k=>delete cache[k]),mails,sheets,post:body=>JSON.parse(ctx.__doPost({postData:{contents:JSON.stringify(body)}}).s),ctx,files};
 };

@@ -24,7 +24,7 @@ var USER_H = ['email','name','company','role','active'];
 var AUD_H = ['time','email','role','action','recId','detail'];
 var TZ = 'Asia/Jakarta';
 var MONTHS = 6;               // SP validity (PP 35/2021 Pasal 52)
-var CODE_TTL = 600, SESS_TTL = 21600, MAX_TRIES = 5;
+var CODE_TTL = 600, SESS_TTL = 21600, MAX_TRIES = 5, SESS_DAYS = 30;
 
 function ss_() { return SpreadsheetApp.getActiveSpreadsheet(); }
 function sh_(name, headers) {
@@ -35,6 +35,8 @@ function sh_(name, headers) {
 function recSh_() { return sh_('Records', REC_H); }
 function userSh_() { return sh_('Users', USER_H); }
 function audSh_() { return sh_('Audit', AUD_H); }
+function sesSh_() { return sh_('Sessions', ['hash', 'email', 'expires', 'created']); }
+function hash_(t) { return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(t))); }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function now_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ss"); }
 function str_(x) { return x === null || x === undefined ? '' : String(x); }
@@ -149,16 +151,34 @@ function verify_(b) {
   var token = Utilities.getUuid() + Utilities.getUuid();
   var sess = { email: u.email, name: u.name, company: u.company, role: norm_(u.role) === 'admin' ? 'admin' : 'ic' };
   c.put('sess:' + token, JSON.stringify(sess), SESS_TTL);
+  // persistent session (30 days, sliding): survives cache eviction and the 6 h cache limit; only a hash of the token is stored
+  var ss = sesSh_(), now = new Date().getTime(), v = ss.getDataRange().getValues();
+  for (var i = v.length; i >= 2; i--) { if (+v[i - 1][2] < now) ss.deleteRow(i); }
+  ss.appendRow([hash_(token), u.email, String(now + SESS_DAYS * 86400000), String(now)]);
   audit_(sess, 'LOGIN', '', '');
   return { ok: true, token: token, me: sess };
 }
 function sess_(token) {
   if (!token) return null;
-  var raw = CacheService.getScriptCache().get('sess:' + token);
-  if (!raw) return null;
-  var s = JSON.parse(raw), u = findUser_(s.email);       // deactivated users lose access at once
+  var c = CacheService.getScriptCache(), raw = c.get('sess:' + token), email = '';
+  if (raw) email = JSON.parse(raw).email;
+  else {
+    var h = hash_(token), v = sesSh_().getDataRange().getValues(), now = new Date().getTime();
+    for (var i = 1; i < v.length; i++) {
+      if (v[i][0] === h) {
+        if (+v[i][2] < now) return null;
+        email = v[i][1];
+        if (+v[i][2] - now < (SESS_DAYS - 1) * 86400000) sesSh_().getRange(i + 1, 3).setValue(String(now + SESS_DAYS * 86400000));   // slide
+        break;
+      }
+    }
+    if (!email) return null;
+  }
+  var u = findUser_(email);                       // deactivated users lose access at once
   if (!u) return null;
-  return { email: u.email, name: u.name, company: u.company, role: norm_(u.role) === 'admin' ? 'admin' : 'ic' };
+  var sess = { email: u.email, name: u.name, company: u.company, role: norm_(u.role) === 'admin' ? 'admin' : 'ic' };
+  c.put('sess:' + token, JSON.stringify(sess), SESS_TTL);
+  return sess;
 }
 
 /* ---------- views ---------- */
@@ -430,7 +450,12 @@ function doPost(e) {
     if (b.action === 'verify') return out_(verify_(b));
     var u = sess_(b.token);
     if (!u) return out_({ ok: false, error: 'auth' });
-    if (b.action === 'logout') { CacheService.getScriptCache().remove('sess:' + b.token); return out_({ ok: true }); }
+    if (b.action === 'logout') {
+      CacheService.getScriptCache().remove('sess:' + b.token);
+      var sh = sesSh_(), h = hash_(b.token), v = sh.getDataRange().getValues();
+      for (var i = v.length; i >= 2; i--) { if (v[i - 1][0] === h) sh.deleteRow(i); }
+      return out_({ ok: true });
+    }
     var f = ACTIONS_[b.action];
     if (!f) return out_({ ok: false, error: 'bad_action' });
     return out_(f(b, u));

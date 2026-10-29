@@ -57,6 +57,9 @@ const au=g.post({action:'audit',token:A});ok(au.rows.some(r=>r[3]==='VERIFY')&&a
 // deactivate
 ok(g.post({action:'usersave',token:A,user:{email:'gsb@x.com',name:'GSB Admin',company:'GSB',role:'ic',active:'no'}}).ok&&g.post({action:'list',token:G}).error==='auth','deactivated user loses session at once');
 ok(g.post({action:'usersave',token:A,user:{email:'iggy@example.com',role:'ic',company:'X'}}).error==='self','admin cannot demote self');
+// session survives cache eviction (the bug: 'asks to sign in every time')
+g.evict();ok(g.post({action:'list',token:A}).ok,'session still valid after the cache is wiped');
+const kt=login('wen@x.com');
 // --- v2.1: post / fill / remind
 g.clearWait();const K=login('wen@x.com').token;g.post({action:'usersave',token:A,user:{email:'gsb@x.com',name:'GSB Admin',company:'GSB',role:'ic',active:'yes'}});g.clearWait();const G2=login('gsb@x.com').token;
 let po=g.post({action:'post',token:A,rec:{company:'WEN',date:'2026-10-27',violation:'No harness at height'},photo:jpg});ok(po.ok,'admin posts photo for WEN');
