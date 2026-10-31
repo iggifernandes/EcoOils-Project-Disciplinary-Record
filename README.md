@@ -59,6 +59,9 @@ Information summary, not legal advice. Contractor workers are employed by the co
 - 5 wrong PINs lock that email for 15 minutes (the same lock answer for unknown emails; unknown email, no PIN and wrong PIN give the same message). Sessions still last 30 days, so the PIN is only needed on a new device or after sign-out.
 - **First time after this update everybody (including the admin) uses "Forgot PIN, or first time?" once to create a PIN.** Code.gs v2.7 must be redeployed (new action `login`; `verify` now needs `pin`).
 
+## Code.gs 2.9.0
+- When HSSE (admin or viewer) posts a warning photo, every active IC admin of that company gets an e-mail at once (date, violation, app link) asking for badge number, name, position and level. If still not entered, the existing morning reminder (08:00 Jakarta, one mail per IC with the count) keeps coming. Run setupReminder() once if you have not. Free: MailApp quota is 100 mails/day on a personal Gmail.
+
 ## v2.9.0
 - Days-left counter: every active SP shows "N day(s) left to reset" (Worker History list and detail, dashboard watch list column "Days left"). The last valid day shows 1 day left; the next day the ladder resets.
 - Worker History is split into Active (with SP badge and days left) and "No active warning (validity finished)"; a worker leaves the Active group when the SP validity ends, but every row and the detail keep "n warning(s) given" and the full history. Front end only; Code.gs unchanged (2.8.0).
@@ -74,4 +77,4 @@ Information summary, not legal advice. Contractor workers are employed by the co
 - HSSE viewers (Hocine, Agung, Ron) can also use **Post photo** (Code.gs v2.7: `post` allowed for admin and viewer); everything else stays read-only for them.
 
 ## Code.gs version line
-- Line 1 of Code.gs always states its version (now 2.8.0) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.
+- Line 1 of Code.gs always states its version (now 2.9.0) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.

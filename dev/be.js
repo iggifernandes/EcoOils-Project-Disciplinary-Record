@@ -114,4 +114,11 @@ for(const [a,x] of [['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',positio
 {const ar=g.post({action:'add',token:A,rec:{date:'2026-10-21',company:'GSB',name:'  BUDI  santoso ',empId:'EO 5551',position:'qc inspector',level:'1',violation:'NOT WEARING PPE IN THE MCC',givenBy:'pak iggy'}});
  const lr=g.post({action:'list',token:A}).records.find(r=>r.id==String(ar.id));
  ok(lr&&lr.name==='Budi Santoso'&&lr.position==='QC Inspector'&&lr.violation==='Not wearing PPE in the MCC'&&lr.givenBy==='Pak Iggy','names, position, violation and given-by are auto-capitalised: '+JSON.stringify([lr.name,lr.position,lr.violation,lr.givenBy]));}
+// --- v2.9 e-mail to the IC when HSSE posts a warning
+{const before=g.mails.length;const ics=g.post({action:'users',token:A}).users||[];
+ const co=(ics.find(x=>x.role==='ic'&&String(x.active).toLowerCase()!=='no')||{}).company;
+ if(co){const pr=g.post({action:'post',token:A,rec:{date:'2026-10-30',company:co,violation:'no helmet'},photo:'/9j/4AAQSkZJRg=='});
+  const m=g.mails.slice(before).filter(x=>/new safety warning/.test(x.subject));
+  ok(pr.ok&&pr.mailed>=1&&m.length>=1&&/No helmet/.test(m[0].body)&&/github\.io/.test(m[0].body),'posting a warning e-mails the IC admin(s) of that company: '+JSON.stringify([pr.ok,pr.mailed,m.length]));}
+ else console.log('SKIP no IC user in seed');}
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);

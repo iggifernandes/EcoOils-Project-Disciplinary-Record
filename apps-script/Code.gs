@@ -1,4 +1,4 @@
-// CODE.GS VERSION 2.8.0 - 2026-10-29 (paste this whole file; the same version is shown by opening the /exec link)
+// CODE.GS VERSION 2.9.0 - 2026-10-31 (paste this whole file; the same version is shown by opening the /exec link)
 /**
  * EcoOils Disciplinary Record - multi-user backend
  *
@@ -399,7 +399,8 @@ function post_(b, u) {
     writeRec_({ id: id, date: date, company: company, name: '', empId: '', position: '', level: '', violation: viol, givenBy: titleCase_(d.givenBy) || u.name, ack: '0',
       status: 'Awaiting', flags: '', photoId: photoId, photoHash: hash, addedBy: u.email, addedAt: now_(), verifiedBy: '', verifiedAt: '', note: '', source: 'hsse' });
     audit_(u, 'POST', id, company + ' ' + date);
-    return { ok: true, id: id };
+    var mailed = notifyICs_(company, date, viol);
+    return { ok: true, id: id, mailed: mailed };
   } finally { lock.releaseLock(); }
 }
 /** The IC completes a posted item: badge number, name, position, level. The photo stays the one HSSE posted. */
@@ -433,6 +434,20 @@ function fill_(b, u) {
     return { ok: true, id: r.id };
   } finally { lock.releaseLock(); }
 }
+var APP_URL = 'https://iggifernandes.github.io/ecooils-project-disciplinary-record/';
+/** Right after HSSE posts a warning: email every active IC admin of that company so they enter the details. Never blocks the post. */
+function notifyICs_(company, date, viol) {
+  var n = 0;
+  try {
+    users_().forEach(function (u) {
+      if (norm_(u.role) !== 'ic' || norm_(u.active) === 'no' || norm_(u.company) !== norm_(company) || !u.email) return;
+      MailApp.sendEmail({ to: u.email, subject: 'EcoOils Disciplinary Record - new safety warning for ' + company + ': please enter the details',
+        body: 'HSSE has posted a safety warning for ' + company + ' (date ' + date + ').\nViolation: ' + viol + '\n\nPlease enter the worker badge number, name, position and warning level within the day.\nOpen: ' + APP_URL + '\nSign in with your email and PIN (Forgot PIN? sets a new one).\n\nIf the details are not entered you will get a reminder every morning at about 08:00.\n\nEcoOils Mentari Project - HSSE' });
+      n++;
+    });
+  } catch (e) { Logger.log('notifyICs_ failed: ' + e); }
+  return n;
+}
 /** Daily email to every active IC admin that has posted items waiting. Counts only, no names. Run setupReminder() once. */
 function remindICs() {
   var aw = recs_().filter(function (r) { return r.status === 'Awaiting'; }), today = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'), sent = 0;
@@ -443,7 +458,7 @@ function remindICs() {
     var oldest = mine.map(function (r) { return r.date; }).sort()[0];
     var days = Math.round((new Date(today) - new Date(oldest)) / 86400000);
     MailApp.sendEmail({ to: u.email, subject: 'EcoOils Disciplinary Record - ' + mine.length + ' warning(s) waiting for your details',
-      body: mine.length + ' safety warning(s) for ' + u.company + ' are waiting for you to enter the badge number, name, position and level.\nOldest: ' + oldest + ' (' + days + ' days).\n\nOpen the app and sign in with your email code.\n\nEcoOils Mentari Project - HSSE' });
+      body: mine.length + ' safety warning(s) for ' + u.company + ' are waiting for you to enter the badge number, name, position and level.\nOldest: ' + oldest + ' (' + days + ' days).\n\nOpen: ' + APP_URL + '\nSign in with your email and PIN (Forgot PIN? sets a new one).\n\nEcoOils Mentari Project - HSSE' });
     sent++;
   });
   return sent;
@@ -562,7 +577,7 @@ function audit_list_(b, u) {
 
 var ACTIONS_ = { post: post_, fill: fill_, list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
 
-function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.8.0' }); }
+function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.9.0' }); }
 function doPost(e) {
   try {
     if (!e || !e.postData) return out_({ ok: false, error: 'no_body' });
