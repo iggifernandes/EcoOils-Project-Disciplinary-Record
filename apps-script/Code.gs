@@ -1,4 +1,4 @@
-// CODE.GS VERSION 2.9.1 - 2026-11-02 (paste this whole file; the same version is shown by opening the /exec link)
+// CODE.GS VERSION 2.10.0 - 2026-11-02 (paste this whole file; the same version is shown by opening the /exec link)
 /**
  * EcoOils Disciplinary Record - multi-user backend
  *
@@ -580,7 +580,19 @@ function audit_list_(b, u) {
 
 var ACTIONS_ = { post: post_, fill: fill_, list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
 
-function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.9.1' }); }
+function doGet(e) {
+  // v2.10.0: counts only for the HSSE Tracker (no names, IDs or violations leave the script)
+  if (e && e.parameter && String(e.parameter.f) === 'counts') {
+    var months = {};
+    recs_().forEach(function (r) {
+      if (String(r.status) !== 'Verified') return;
+      var m = String(r.date || '').slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return;
+      months[m] = months[m] || { verified: 0 }; months[m].verified++;
+    });
+    return out_({ ok: true, months: months });
+  }
+  return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.10.0' });
+}
 function doPost(e) {
   try {
     if (!e || !e.postData) return out_({ ok: false, error: 'no_body' });
