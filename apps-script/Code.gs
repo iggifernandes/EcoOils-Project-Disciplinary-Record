@@ -1,4 +1,4 @@
-// CODE.GS VERSION 2.9.0 - 2026-10-31 (paste this whole file; the same version is shown by opening the /exec link)
+// CODE.GS VERSION 2.9.1 - 2026-11-02 (paste this whole file; the same version is shown by opening the /exec link)
 /**
  * EcoOils Disciplinary Record - multi-user backend
  *
@@ -269,25 +269,28 @@ function verify_(b) {
   audit_({ email: u.email, role: role_(u.role) }, 'PIN_SET', '', 'via email code');
   return startSess_(u, 'code+newpin');
 }
+function slide_(token, now) {
+  var h = hash_(token), sh = sesSh_(), v = sh.getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) if (v[i][0] === h) { if (+v[i][2] >= now) sh.getRange(i + 1, 3).setValue(String(now + SESS_DAYS * 86400000)); return +v[i][2] >= now; }
+  return false;
+}
+/** Session = SESS_DAYS (30) days from the LAST use: the expiry moves forward at least every 12 hours of use (also while the 6-hour cache is warm). */
 function sess_(token) {
   if (!token) return null;
-  var c = CacheService.getScriptCache(), raw = c.get('sess:' + token), email = '';
-  if (raw) email = JSON.parse(raw).email;
-  else {
-    var h = hash_(token), v = sesSh_().getDataRange().getValues(), now = new Date().getTime();
-    for (var i = 1; i < v.length; i++) {
-      if (v[i][0] === h) {
-        if (+v[i][2] < now) return null;
-        email = v[i][1];
-        if (+v[i][2] - now < (SESS_DAYS - 1) * 86400000) sesSh_().getRange(i + 1, 3).setValue(String(now + SESS_DAYS * 86400000));   // slide
-        break;
-      }
+  var c = CacheService.getScriptCache(), raw = c.get('sess:' + token), email = '', now = new Date().getTime(), last = 0;
+  if (raw) { var o = JSON.parse(raw); email = o.email; last = +o.sl || 0; }
+  if (!email || now - last > 43200000) {
+    if (!slide_(token, now)) return null;
+    last = now;
+    if (!email) {
+      var h = hash_(token), v = sesSh_().getDataRange().getValues();
+      for (var i = 1; i < v.length; i++) if (v[i][0] === h) { email = v[i][1]; break; }
+      if (!email) return null;
     }
-    if (!email) return null;
   }
   var u = findUser_(email);                       // deactivated users lose access at once
   if (!u) return null;
-  var sess = { email: u.email, name: u.name, company: u.company, role: role_(u.role) };
+  var sess = { email: u.email, name: u.name, company: u.company, role: role_(u.role), sl: last };
   c.put('sess:' + token, JSON.stringify(sess), SESS_TTL);
   return sess;
 }
@@ -577,7 +580,7 @@ function audit_list_(b, u) {
 
 var ACTIONS_ = { post: post_, fill: fill_, list: list_, lookup: lookup_, add: add_, review: review_, update: update_, 'delete': delete_, import: import_, photo: photo_, users: users_list_, usersave: users_save_, audit: audit_list_ };
 
-function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.9.0' }); }
+function doGet() { return out_({ ok: true, app: 'EcoOils Disciplinary Record', version: '2.9.1' }); }
 function doPost(e) {
   try {
     if (!e || !e.postData) return out_({ ok: false, error: 'no_body' });

@@ -59,6 +59,9 @@ Information summary, not legal advice. Contractor workers are employed by the co
 - 5 wrong PINs lock that email for 15 minutes (the same lock answer for unknown emails; unknown email, no PIN and wrong PIN give the same message). Sessions still last 30 days, so the PIN is only needed on a new device or after sign-out.
 - **First time after this update everybody (including the admin) uses "Forgot PIN, or first time?" once to create a PIN.** Code.gs v2.7 must be redeployed (new action `login`; `verify` now needs `pin`).
 
+## Code.gs 2.9.1
+- Stay signed in: a sign-in now lasts 30 days from the LAST use. Before, the 30 days could not move while the 6-hour cache was warm, so someone using the app daily was still signed out 30 days after the first sign-in. Now the expiry is pushed forward at least every 12 hours of use. Admin, viewers and ICs all follow this. Signing out, or deactivating the user in Settings > Users, ends it at once. Sessions already created keep working.
+
 ## Code.gs 2.9.0
 - When HSSE (admin or viewer) posts a warning photo, every active IC admin of that company gets an e-mail at once (date, violation, app link) asking for badge number, name, position and level. If still not entered, the existing morning reminder (08:00 Jakarta, one mail per IC with the count) keeps coming. Run setupReminder() once if you have not. Free: MailApp quota is 100 mails/day on a personal Gmail.
 
@@ -77,4 +80,4 @@ Information summary, not legal advice. Contractor workers are employed by the co
 - HSSE viewers (Hocine, Agung, Ron) can also use **Post photo** (Code.gs v2.7: `post` allowed for admin and viewer); everything else stays read-only for them.
 
 ## Code.gs version line
-- Line 1 of Code.gs always states its version (now 2.9.0) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.
+- Line 1 of Code.gs always states its version (now 2.9.1) and the /exec link shows the same, so you can check which version is deployed. It is bumped on every Code.gs change.

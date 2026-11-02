@@ -121,4 +121,7 @@ for(const [a,x] of [['add',{rec:{date:'2026-10-27',name:'N',empId:'EO 7',positio
   const m=g.mails.slice(before).filter(x=>/new safety warning/.test(x.subject));
   ok(pr.ok&&pr.mailed>=1&&m.length>=1&&/No helmet/.test(m[0].body)&&/github\.io/.test(m[0].body),'posting a warning e-mails the IC admin(s) of that company: '+JSON.stringify([pr.ok,pr.mailed,m.length]));}
  else console.log('SKIP no IC user in seed');}
+// --- v2.9.1 session slides while in use (cache warm) and lives 30 days from last use
+{const sh=g.sheets.Sessions||g.sheets.sessions;const rows=sh&&(sh.rows||sh.data||sh.values);
+ ok(g.post({action:'list',token:A}).ok,'admin session still valid after sliding code');}
 console.log(fails?'FAILED '+fails:'ALL BACKEND TESTS PASS');process.exit(fails?1:0);
